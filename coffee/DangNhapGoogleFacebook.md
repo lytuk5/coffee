@@ -2,6 +2,12 @@
 
 Chọn profile **Dua Hau Coffee (HTTPS)** trong Visual Studio. Website chạy ở `https://localhost:5501` với profile này. Nếu trình duyệt chưa tin cậy chứng chỉ phát triển, chạy `dotnet dev-certs https --trust`.
 
+## Trạng thái kiểm thử
+
+- Google đã được cấu hình trên máy phát triển. Nút Google đã được kiểm tra và chuyển hướng đúng sang trang đăng nhập Google. Cần dùng Gmail thử nghiệm để xác nhận bước quay về website và bổ sung số điện thoại lần đầu.
+- Facebook đã có phần tích hợp trong mã nguồn và vẫn cần App ID, App Secret để kích hoạt.
+- Sau khi clone, cấu hình thông tin OAuth riêng trong **Manage User Secrets**. Chỉ mã nguồn và hướng dẫn được chia sẻ qua GitHub.
+
 ## Google
 
 Tạo OAuth client loại **Web application** trong Google Cloud và thêm URL chuyển hướng `https://localhost:5501/signin-google`. Nếu ứng dụng Google ở chế độ thử nghiệm, thêm tài khoản thử nghiệm trong cấu hình Google.
