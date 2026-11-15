@@ -1,0 +1,39 @@
+@model Order
+
+<dl class="order-contact">
+    <div><dt>Người nhận</dt><dd>@Model.CustomerName</dd></div>
+    <div><dt>Số điện thoại</dt><dd>@Model.CustomerPhone</dd></div>
+    <div><dt>Địa chỉ giao hàng</dt><dd>@Model.DeliveryAddress</dd></div>
+    @if (!string.IsNullOrEmpty(Model.Note))
+    {
+        <div><dt>Ghi chú giao hàng</dt><dd>@Model.Note</dd></div>
+    }
+</dl>
+
+<table class="order-item-table">
+    <thead>
+        <tr><th scope="col">Món</th><th scope="col">Số lượng</th><th scope="col">Đơn giá</th><th scope="col">Thành tiền</th></tr>
+    </thead>
+    <tbody>
+    @foreach (var item in Model.Items)
+    {
+        <tr>
+            <td>
+                @item.Name@(item.Size is not null ? $" ({item.Size})" : "")
+                @if (!string.IsNullOrEmpty(item.Note))
+                {
+                    <div class="cart-item-note">@item.Note</div>
+                }
+            </td>
+            <td>@item.Quantity</td>
+            <td>@Money.Format(item.Price)</td>
+            <td>@Money.Format(item.Price * item.Quantity)</td>
+        </tr>
+    }
+    </tbody>
+</table>
+
+<div class="order-card-footer">
+    <span class="order-total">@Money.Format(Model.TotalAmount)</span>
+    <span class="order-time">@Model.CreatedAt.ToString("HH:mm dd/MM/yyyy")</span>
+</div>

@@ -1,0 +1,17 @@
+@model LoginForm
+<div data-account-content data-title="Đăng nhập">
+    <form data-account-form method="post" asp-controller="Account" asp-action="Login" class="admin-form">
+        <div asp-validation-summary="All" class="admin-validation login-validation" role="alert"></div>
+        <input type="hidden" asp-for="ReturnUrl" />
+        <label for="login-user-name">Tên đăng nhập</label>
+        <input asp-for="UserName" id="login-user-name" autofocus autocomplete="username" maxlength="64" required />
+        <label for="login-password">Mật khẩu</label>
+        <div class="password-field">
+            <input asp-for="Password" id="login-password" type="password" autocomplete="current-password" maxlength="256" required />
+            <button type="button" data-password-toggle aria-controls="login-password" aria-pressed="false" aria-label="Hiện mật khẩu">Hiện</button>
+        </div>
+        <button class="btn-primary">Đăng nhập</button>
+        <p><a data-account-view asp-controller="Account" asp-action="Register" asp-route-returnUrl="@Model.ReturnUrl">Đăng ký</a></p>
+    </form>
+    <partial name="~/Views/Account/_ExternalButtons.cshtml" model="Model.ReturnUrl" />
+</div>

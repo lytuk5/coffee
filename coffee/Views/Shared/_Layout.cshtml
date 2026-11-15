@@ -1,0 +1,118 @@
+@using Microsoft.AspNetCore.Mvc.ModelBinding
+@using Microsoft.AspNetCore.Mvc.ViewFeatures
+@inject CafeDuaHau.Services.CartService Cart
+@{
+    var controller = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
+    var isAdmin = User.IsInRole("Admin");
+    var signedIn = User.Identity?.IsAuthenticated == true;
+    var cartCount = Cart.Count;
+}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Dưa Hấu coffee</title>
+
+    <link rel="icon" type="image/png" href="~/images/logo.png" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap"
+          rel="stylesheet" />
+
+    <link rel="stylesheet" href="~/css/global.css" />
+    <link rel="stylesheet" href="~/css/customer.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body>
+
+    <div id="toast-container" class="toast-container">
+        @if (TempData["Success"] is string successMessage)
+        {
+            <div class="toast toast-success toast-show">@successMessage</div>
+        }
+        @if (TempData["Error"] is string errorMessage)
+        {
+            <div class="toast toast-error toast-show">@errorMessage</div>
+        }
+    </div>
+
+    <header id="main-header" class="main-header">
+        <div class="header-container">
+            <a class="logo-area" asp-controller="Menu" asp-action="Index" style="text-decoration:none;">
+                <img src="~/images/logo.png" alt="Dưa Hấu coffee" class="logo-img" />
+                <span class="logo-text">Dưa hấu coffee</span>
+            </a>
+
+            <nav class="main-nav">
+                @if (isAdmin)
+                {
+                    <a class="nav-btn" asp-controller="Menu" asp-action="Index">Xem thực đơn</a>
+                    <a class="nav-btn @(controller == "Admin" ? "nav-active" : "")"
+                       asp-controller="Admin" asp-action="Index">Quản lý thực đơn</a>
+                    <a class="nav-btn @(controller == "AdminOrders" ? "nav-active" : "")"
+                       asp-controller="AdminOrders" asp-action="Index">Đơn hàng</a>
+                }
+                else
+                {
+                    <a class="nav-btn @(controller == "Menu" ? "nav-active" : "")"
+                       asp-controller="Menu" asp-action="Index">☕ Thực đơn</a>
+                    <a class="nav-btn @(controller == "Cart" ? "nav-active" : "")"
+                       asp-controller="Cart" asp-action="Index">
+                        🛒 Giỏ hàng
+                        @if (cartCount > 0)
+                        {
+                            <span class="badge">@(cartCount > 99 ? "99+" : cartCount.ToString())</span>
+                        }
+                    </a>
+                    @if (signedIn)
+                    {
+                        <a class="nav-btn @(controller == "Orders" ? "nav-active" : "")"
+                           asp-controller="Orders" asp-action="Index">📦 Đơn của tôi</a>
+                    }
+                }
+            </nav>
+
+            @if (signedIn)
+            {
+                <form class="nav-logout" method="post" asp-controller="Account" asp-action="Logout">
+                    <button class="nav-btn nav-login" type="submit">Đăng xuất</button>
+                </form>
+            }
+            else
+            {
+                <a class="nav-btn nav-login" data-open-login asp-controller="Account" asp-action="Login">Đăng nhập</a>
+            }
+
+            <button id="mobile-menu-toggle" class="mobile-menu-toggle" type="button">☰</button>
+        </div>
+    </header>
+
+    <main id="app-root" class="app-root">
+        @RenderBody()
+    </main>
+
+    @if (!signedIn)
+    {
+        if (ViewData["AccountDialogModel"] is object accountModel)
+        {
+            <partial name="~/Views/Account/_AccountDialog.cshtml" model="accountModel" />
+        }
+        else
+        {
+            <partial name="~/Views/Account/_AccountDialog.cshtml" model="@(new LoginForm())"
+                     view-data="@(new ViewDataDictionary(new EmptyModelMetadataProvider(), new ModelStateDictionary()))" />
+        }
+    }
+
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @if (isAdmin || User.IsInRole("Customer"))
+    {
+        <partial name="_CafeChat" />
+        <script src="~/lib/signalr/signalr.min.js" asp-append-version="true"></script>
+        <script src="~/js/chat.js" asp-append-version="true"></script>
+    }
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

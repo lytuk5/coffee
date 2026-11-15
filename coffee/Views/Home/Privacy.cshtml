@@ -1,0 +1,61 @@
+﻿@model List<Order>
+@{
+    ViewData["Title"] = "Đơn của tôi";
+}
+
+<section class="view view-tracking">
+    <div class="view-header"><h2>Đơn hàng của tôi</h2></div>
+
+    @if (Model.Count == 0)
+    {
+        <div class="empty-state">
+            <div class="empty-state-icon">📦</div>
+            <p>Bạn chưa có đơn hàng nào.</p>
+            <a class="btn-primary" style="margin-top:16px;" asp-controller="Menu" asp-action="Index">Đặt món ngay</a>
+        </div>
+    }
+    else
+    {
+        <div class="orders-list">
+            @foreach (var order in Model)
+            {
+                var isPending = order.Status == OrderStatus.Pending;
+
+                <div class="order-card">
+                    <div class="order-card-header">
+                        <span class="order-id">Đơn #@order.Id.Substring(order.Id.Length - 6).ToUpper()</span>
+                        <span class="order-status-badge @(isPending ? "status-pending" : "status-cancelled")">
+                            @(isPending ? "Đã đặt" : "Đã hủy")
+                        </span>
+                    </div>
+
+                    <div class="order-card-items">
+                        @foreach (var item in order.Items)
+                        {
+                            <div>
+                                @item.Quantity x @item.Name@(item.Size != null ? $" [{item.Size}]" : "")@(!string.IsNullOrEmpty(item.Note) ? $" — {item.Note}" : "")
+                            </div>
+                        }
+                    </div>
+
+                    <div class="order-card-footer">
+                        <span class="order-total">@Money.Format(order.TotalAmount)</span>
+                        <span class="order-time">@order.CreatedAt.ToString("HH:mm dd/MM/yyyy")</span>
+                    </div>
+
+                    @if (isPending)
+                    {
+                        <form method="post" asp-action="Cancel" class="cancel-order-form">
+                            <input type="hidden" name="id" value="@order.Id" />
+                            <button type="submit" class="btn-secondary btn-block"
+                                    style="margin-top:10px; color:var(--color-danger); border-color:var(--color-danger);"
+                                    data-confirm="Bạn có chắc chắn muốn hủy đơn hàng này? Hành động này không thể hoàn tác.">
+                                Hủy đơn hàng
+                            </button>
+                        </form>
+                    }
+                </div>
+            }
+        </div>
+    }
+</section>

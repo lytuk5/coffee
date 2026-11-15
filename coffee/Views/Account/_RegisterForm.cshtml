@@ -1,0 +1,25 @@
+@model RegisterForm
+<div data-account-content data-title="Đăng ký tài khoản khách">
+    <form data-account-form method="post" asp-controller="Account" asp-action="Register" class="admin-form">
+        <div asp-validation-summary="All" class="admin-validation"></div>
+        <input type="hidden" asp-for="ReturnUrl" />
+        <label asp-for="UserName">Tên đăng nhập</label>
+        <input asp-for="UserName" autofocus autocomplete="username" minlength="3" maxlength="64" required />
+        <label asp-for="PhoneNumber">Số điện thoại</label>
+        <input asp-for="PhoneNumber" type="tel" autocomplete="tel" inputmode="numeric"
+               maxlength="10" pattern="@ExternalPhoneForm.PhonePattern" required />
+        <label asp-for="Password">Mật khẩu (ít nhất 8 ký tự)</label>
+        <div class="password-field">
+            <input asp-for="Password" type="password" autocomplete="new-password" minlength="8" maxlength="256" required />
+            <button type="button" data-password-toggle aria-controls="Password" aria-pressed="false" aria-label="Hiện mật khẩu">Hiện</button>
+        </div>
+        <label asp-for="ConfirmPassword">Nhập lại mật khẩu</label>
+        <div class="password-field">
+            <input asp-for="ConfirmPassword" type="password" autocomplete="new-password" maxlength="256" required />
+            <button type="button" data-password-toggle aria-controls="ConfirmPassword" aria-pressed="false" aria-label="Hiện mật khẩu">Hiện</button>
+        </div>
+        <button class="btn-primary">Đăng ký</button>
+        <p>Đã có tài khoản? <a data-account-view asp-controller="Account" asp-action="Login" asp-route-returnUrl="@Model.ReturnUrl">Đăng nhập</a></p>
+    </form>
+    <partial name="~/Views/Account/_ExternalButtons.cshtml" model="Model.ReturnUrl" />
+</div>

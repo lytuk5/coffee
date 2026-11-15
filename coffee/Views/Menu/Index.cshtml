@@ -1,0 +1,121 @@
+@using System.Text.Json
+@model MenuIndexViewModel
+@{
+    ViewData["Title"] = "Thực đơn";
+    var keywordRoute = string.IsNullOrEmpty(Model.Keyword) ? null : Model.Keyword;
+    var returnUrl = Context.Request.Path + Context.Request.QueryString;
+}
+
+<section class="view view-menu">
+    <div class="view-header">
+        <h2>Thực đơn</h2>
+    </div>
+
+    <form method="get" asp-controller="Menu" asp-action="Index" class="menu-toolbar">
+        <input type="hidden" name="category" value="@Model.ActiveCategory" />
+        <input type="text" name="q" value="@Model.Keyword" class="menu-search-input"
+               placeholder="Tìm kiếm món ăn, thức uống..." />
+    </form>
+
+    <div class="category-tabs">
+        <a class="category-tab @(Model.ActiveCategory == "all" ? "active" : "")"
+           asp-action="Index" asp-route-category="all" asp-route-q="@keywordRoute">Tất cả</a>
+        @foreach (var cat in Model.Categories)
+        {
+            <a class="category-tab @(Model.ActiveCategory == cat.Id ? "active" : "")"
+               asp-action="Index" asp-route-category="@cat.Id" asp-route-q="@keywordRoute">@cat.Name</a>
+        }
+    </div>
+
+    <div class="menu-grid">
+        @if (Model.Items.Count == 0)
+        {
+            <div class="empty-state" style="grid-column: 1 / -1;">
+                <div class="empty-state-icon">🔍</div>
+                <p>Không tìm thấy món ăn phù hợp.</p>
+            </div>
+        }
+
+        @foreach (var item in Model.Items)
+        {
+            var sizesJson = JsonSerializer.Serialize(item.Sizes.Select(s => new { label = s.Label, price = s.Price }));
+
+            <div class="menu-item-card @(item.IsSoldOut ? "is-sold-out" : "")">
+                <a class="menu-item-image menu-detail-link" asp-action="Details" asp-route-id="@item.Id">
+                    <img src="@item.ImageUrl" alt="@item.Name" loading="lazy"
+                         onerror="this.onerror=null;this.src='/images/menu/placeholder.svg'" />
+                    @if (item.IsSoldOut)
+                    {
+                        <span class="sold-out-badge">Hết hàng</span>
+                    }
+                </a>
+                <div class="menu-item-info">
+                    <h3 class="menu-item-name"><a class="menu-detail-link" asp-action="Details" asp-route-id="@item.Id">@item.Name</a></h3>
+                    <p class="menu-item-desc">@item.Description</p>
+                    <div class="menu-item-footer">
+                        <span class="menu-item-price">
+                            @(item.HasSizes ? "Từ " + Money.Format(item.BasePrice) : Money.Format(item.Price))
+                        </span>
+                        <div class="menu-item-actions">
+                            <button type="button" class="btn-icon-action" title="Thêm vào giỏ hàng"
+                                    data-open-item data-mode="cart"
+                                    data-id="@item.Id" data-name="@item.Name" data-image="@item.ImageUrl"
+                                    data-price="@item.Price" data-sizes="@sizesJson"
+                                    disabled="@item.IsSoldOut">
+                                <span aria-hidden="true">🛒</span>
+                            </button>
+                            <button type="button" class="btn-icon-action" title="Mua ngay"
+                                    data-open-item data-mode="buyNow"
+                                    data-id="@item.Id" data-name="@item.Name" data-image="@item.ImageUrl"
+                                    data-price="@item.Price" data-sizes="@sizesJson"
+                                    disabled="@item.IsSoldOut">
+                                <span aria-hidden="true">🚚</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</section>
+
+@* Hộp thoại chọn size / số lượng / ghi chú — dùng chung cho mọi món (điều khiển bởi site.js) *@
+<div id="item-modal" class="modal-overlay hidden">
+    <form method="post" asp-controller="Cart" asp-action="Add" class="modal-box">
+        <input type="hidden" name="itemId" />
+        <input type="hidden" name="buyNow" value="false" />
+        <input type="hidden" name="returnUrl" value="@returnUrl" />
+        <input type="hidden" name="quantity" value="1" />
+
+        <h3 id="modal-title">Thêm vào giỏ hàng</h3>
+
+        <div class="modal-item-preview">
+            <img id="modal-image" src="/images/menu/placeholder.svg" alt=""
+                 style="width:64px; height:64px; border-radius:var(--radius-sm); object-fit:cover;" />
+            <div>
+                <div id="modal-name" style="font-weight:600; font-size:14px;"></div>
+                <div id="modal-price" style="color:var(--color-primary-dark); font-weight:700; font-size:15px; margin-top:4px;"></div>
+            </div>
+        </div>
+
+        <div id="modal-size-group" class="hidden" style="margin-bottom:14px;">
+            <div style="font-size:13px; font-weight:500; margin-bottom:8px;">Chọn size:</div>
+            <div id="modal-size-list" class="size-list"></div>
+        </div>
+
+        <div class="modal-qty-row">
+            <span style="font-size:13px; font-weight:500;">Số lượng:</span>
+            <button type="button" class="qty-btn" data-qty="-1">-</button>
+            <span class="qty-value" id="modal-qty-value">1</span>
+            <button type="button" class="qty-btn" data-qty="1">+</button>
+        </div>
+
+        <textarea name="note" class="modal-note-textarea" maxlength="200"
+                  placeholder="Ghi chú thêm (VD: ít đá, không đường...)"></textarea>
+
+        <div class="modal-actions">
+            <button type="button" class="btn-secondary" data-close-modal>Hủy</button>
+            <button type="submit" class="btn-primary" id="modal-confirm">Thêm vào giỏ</button>
+        </div>
+    </form>
+</div>

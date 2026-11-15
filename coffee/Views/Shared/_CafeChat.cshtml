@@ -1,0 +1,31 @@
+@{
+    var chatAdmin = User.IsInRole("Admin");
+}
+<div class="cafe-chat" data-cafe-chat data-role="@(chatAdmin ? "admin" : "customer")" data-hub="@Url.Content("~/cafe-chat")">
+    <section class="chat-panel" id="cafe-chat-panel" aria-labelledby="cafe-chat-title" hidden>
+        <header class="chat-header">
+            <h2 id="cafe-chat-title">@(chatAdmin ? "Trò chuyện với khách" : "Trò chuyện với quán")</h2>
+            <button type="button" data-chat-minimize aria-label="Thu nhỏ khung chat">−</button>
+        </header>
+        @if (chatAdmin)
+        {
+            <div class="chat-picker">
+                <label for="chat-customer">Khách hàng</label>
+                <select id="chat-customer" data-chat-customer disabled>
+                    <option value="">Chưa có cuộc trò chuyện</option>
+                </select>
+            </div>
+        }
+        <p class="chat-connection" data-chat-status role="status">Đang kết nối…</p>
+        <ol class="chat-messages" data-chat-messages role="log" aria-label="Tin nhắn"></ol>
+        <form class="chat-compose" data-chat-form>
+            <input name="message" maxlength="1000" placeholder="Nhập tin nhắn…" aria-label="Tin nhắn" required disabled />
+            <button type="submit" class="btn-primary" disabled>Gửi</button>
+        </form>
+    </section>
+    <button class="chat-launcher" type="button" data-chat-open aria-label="Mở trò chuyện"
+            aria-controls="cafe-chat-panel" aria-expanded="false">
+        <span aria-hidden="true">💬</span>
+        <span class="chat-unread" data-chat-unread hidden></span>
+    </button>
+</div>

@@ -1,0 +1,27 @@
+@model object
+@{
+    var standalone = ViewData["AccountDialogModel"] is not null;
+    var (title, formPath) = Model switch
+    {
+        RegisterForm => ("Đăng ký tài khoản khách", "~/Views/Account/_RegisterForm.cshtml"),
+        ExternalPhoneForm => ("Bổ sung số điện thoại", "~/Views/Account/_ExternalPhoneForm.cshtml"),
+        _ => ("Đăng nhập", "~/Views/Account/_LoginForm.cshtml")
+    };
+}
+
+<dialog id="login-dialog" class="login-dialog" aria-labelledby="login-dialog-title"
+        data-login-back="@Url.Action("Index", "Menu")" open="@standalone">
+    <div class="login-dialog-heading">
+        <h2 id="login-dialog-title">@title</h2>
+        @if (standalone)
+        {
+            <a class="login-dialog-close" asp-controller="Menu" asp-action="Index" aria-label="Đóng hộp thoại">×</a>
+        }
+        else
+        {
+            <button class="login-dialog-close" type="button" data-close-login aria-label="Đóng hộp thoại">×</button>
+        }
+    </div>
+    <partial name="@formPath" model="Model" />
+    <p class="login-dialog-error" role="alert" hidden></p>
+</dialog>

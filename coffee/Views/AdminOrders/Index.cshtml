@@ -1,0 +1,44 @@
+@model List<Order>
+@{
+    ViewData["Title"] = "Đơn hàng";
+    var query = ViewData["Query"] as string;
+}
+
+<section class="view view-tracking">
+    <div class="view-header"><h2>Đơn hàng</h2></div>
+    <form method="get" asp-action="Index" class="order-search">
+        <input class="menu-search-input" type="search" name="q" value="@query"
+               aria-label="Tìm đơn hàng" placeholder="Mã đơn, tài khoản, người nhận hoặc số điện thoại" />
+        <button class="btn-primary">Tìm đơn</button>
+        @if (!string.IsNullOrEmpty(query))
+        {
+            <a class="btn-secondary" asp-action="Index">Xóa tìm kiếm</a>
+        }
+    </form>
+    @if (Model.Count == 0)
+    {
+        <p>@(string.IsNullOrEmpty(query) ? "Chưa có đơn hàng." : "Không tìm thấy đơn hàng phù hợp.")</p>
+    }
+    <div class="orders-list">
+        @foreach (var order in Model)
+        {
+            <article class="order-card">
+                <div class="order-card-header">
+                    <span class="order-id">Đơn #@order.Id[^6..].ToUpperInvariant()</span>
+                    <span class="order-status-badge status-@order.Status.ToString().ToLowerInvariant()">@order.Status.Label()</span>
+                </div>
+                <partial name="_OrderDetails" model="order" />
+                @if (order.Status == OrderStatus.Pending)
+                {
+                    <form method="post" asp-action="SetStatus" asp-route-id="@order.Id" class="admin-actions order-admin-actions">
+                        <input type="hidden" name="q" value="@query" />
+                        <button class="btn-primary" type="submit" name="status" value="Delivered"
+                                data-confirm="Xác nhận đơn này đã giao hàng?">Xác nhận đã giao</button>
+                        <button class="btn-secondary" type="submit" name="status" value="Cancelled"
+                                data-confirm="Bạn có chắc muốn hủy đơn này?">Hủy đơn</button>
+                    </form>
+                }
+            </article>
+        }
+    </div>
+</section>

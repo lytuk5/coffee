@@ -1,0 +1,10 @@
+@model ExternalPhoneForm
+<div data-account-content data-title="Bổ sung số điện thoại">
+    <form data-account-form method="post" asp-controller="Account" asp-action="ExternalPhone" class="admin-form">
+        <div asp-validation-summary="All" class="admin-validation login-validation" role="alert"></div>
+        <label asp-for="PhoneNumber">Số điện thoại</label>
+        <input asp-for="PhoneNumber" type="tel" autofocus autocomplete="tel" inputmode="numeric"
+               maxlength="10" pattern="@ExternalPhoneForm.PhonePattern" required />
+        <button class="btn-primary">Hoàn tất đăng ký</button>
+    </form>
+</div>

@@ -1,0 +1,48 @@
+@model List<MenuItem>
+@{
+    ViewData["Title"] = "Quản lý thực đơn";
+}
+
+<section class="view">
+    <div class="view-header"><h2>Quản lý thực đơn</h2></div>
+    <div class="admin-actions">
+        <a asp-action="Edit" class="btn-primary">Thêm món</a>
+    </div>
+    <div class="admin-table-wrap">
+        <table class="admin-table">
+            <thead>
+                <tr><th>Món</th><th>Giá</th><th>Trạng thái</th><th>Thao tác</th></tr>
+            </thead>
+            <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>@item.Name</td>
+                    <td>@(item.HasSizes ? string.Join(" / ", item.Sizes.OrderByDescending(size => size.Label).Select(size => $"{size.Label} {Money.Format(size.Price)}")) : Money.Format(item.Price))</td>
+                    <td>
+                        <div class="admin-actions">
+                            <span>@(item.IsSoldOut ? "Hết hàng" : "Còn hàng")</span>
+                            <form method="post" asp-action="SetAvailability" asp-route-id="@item.Id">
+                                <input type="hidden" name="isSoldOut" value="@((!item.IsSoldOut).ToString().ToLowerInvariant())" />
+                                <button class="availability-switch" type="submit" role="switch"
+                                        aria-checked="@(item.IsSoldOut ? "false" : "true")"
+                                        aria-label="@item.Name còn hàng"></button>
+                            </form>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="admin-actions">
+                            <a asp-action="Edit" asp-route-id="@item.Id" class="btn-secondary">Sửa</a>
+                            <a asp-controller="Menu" asp-action="Details" asp-route-id="@item.Id" asp-fragment="reviews" class="btn-secondary">Đánh giá</a>
+                            <form method="post" asp-action="Delete" asp-route-id="@item.Id"
+                                  onsubmit="return confirm('Bạn có chắc muốn xóa món này?')">
+                                <button class="btn-secondary">Xóa</button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</section>

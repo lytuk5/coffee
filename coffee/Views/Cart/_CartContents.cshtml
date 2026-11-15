@@ -1,0 +1,73 @@
+@model List<CartItem>
+@{
+    var total = Model.Sum(i => i.LineTotal);
+    var count = Model.Sum(i => i.Quantity);
+}
+
+<section class="view view-cart">
+    @if (Model.Count == 0)
+    {
+        <div class="view-header"><h2>Giỏ hàng</h2></div>
+        <div class="empty-state">
+            <div class="empty-state-icon">🛒</div>
+            <p>Giỏ hàng của bạn đang trống.</p>
+            <a class="btn-primary" style="margin-top:16px;" asp-controller="Menu" asp-action="Index">Xem thực đơn</a>
+        </div>
+    }
+    else
+    {
+        <div class="view-header"><h2>Giỏ hàng (@count món)</h2></div>
+
+        <div class="cart-layout">
+            <div class="cart-items-list">
+                @foreach (var item in Model)
+                {
+                    <div class="cart-item-row">
+                        <img class="cart-item-img" src="@item.ImageUrl" alt="@item.Name"
+                             onerror="this.onerror=null;this.src='/images/menu/placeholder.svg'" />
+                        <div class="cart-item-details">
+                            <h4 class="cart-item-name">@(item.Size != null ? $"{item.Name} ({item.Size})" : item.Name)</h4>
+                            @if (!string.IsNullOrEmpty(item.Note))
+                            {
+                                <p class="cart-item-note">Ghi chú: @item.Note</p>
+                            }
+                            <span class="cart-item-price">@Money.Format(item.LineTotal)</span>
+                        </div>
+
+                        <div class="cart-item-qty-control">
+                            <form method="post" asp-action="Update" class="inline-form">
+                                <input type="hidden" name="key" value="@item.Key" />
+                                <input type="hidden" name="delta" value="-1" />
+                                <button type="submit" class="qty-btn">-</button>
+                            </form>
+                            <span class="qty-value">@item.Quantity</span>
+                            <form method="post" asp-action="Update" class="inline-form">
+                                <input type="hidden" name="key" value="@item.Key" />
+                                <input type="hidden" name="delta" value="1" />
+                                <button type="submit" class="qty-btn">+</button>
+                            </form>
+                        </div>
+
+                        <form method="post" asp-action="Remove" class="inline-form">
+                            <input type="hidden" name="key" value="@item.Key" />
+                            <button type="submit" class="btn-remove-item">🗑️</button>
+                        </form>
+                    </div>
+                }
+            </div>
+
+            <div class="cart-summary-box">
+                <h3>Tóm tắt đơn hàng</h3>
+                <div class="summary-row">
+                    <span>Tạm tính</span>
+                    <span>@Money.Format(total)</span>
+                </div>
+                <div class="summary-row total">
+                    <span>Tổng cộng</span>
+                    <span>@Money.Format(total)</span>
+                </div>
+                <a class="btn-primary btn-block" style="margin-top:12px;" asp-action="Checkout">Đặt hàng ngay</a>
+            </div>
+        </div>
+    }
+</section>

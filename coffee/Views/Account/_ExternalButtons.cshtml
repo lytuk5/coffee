@@ -1,0 +1,29 @@
+@model string?
+@inject Microsoft.AspNetCore.Authentication.IAuthenticationSchemeProvider Schemes
+@using CafeDuaHau.Services
+@{
+    var googleReady = await Schemes.GetSchemeAsync(ExternalAccounts.Google) is not null;
+    var facebookReady = await Schemes.GetSchemeAsync(ExternalAccounts.Facebook) is not null;
+}
+
+<form method="post" asp-controller="Account" asp-action="ExternalLogin" class="external-account-actions">
+    <input type="hidden" name="returnUrl" value="@Model" />
+    <button type="submit" name="provider" value="@ExternalAccounts.Google"
+            aria-label="Đăng nhập bằng Google" title="Google"
+            disabled="@(!googleReady || !Context.Request.IsHttps)">
+        <svg viewBox="0 0 48 48" aria-hidden="true">
+            <path fill="#4285F4" d="M44 24.5c0-1.5-.1-2.9-.4-4.3H24v8.2h11.2a9.6 9.6 0 0 1-4.2 6.3V40h6.8c4-3.7 6.2-9.1 6.2-15.5Z"/>
+            <path fill="#34A853" d="M24 45c5.7 0 10.5-1.9 13.8-5L31 34.7a12.7 12.7 0 0 1-19-6.6H5v5.4A21 21 0 0 0 24 45Z"/>
+            <path fill="#FBBC05" d="M12 28.1a12.6 12.6 0 0 1 0-8.2v-5.4H5a21 21 0 0 0 0 19l7-5.4Z"/>
+            <path fill="#EA4335" d="M24 11.3c3.1 0 5.9 1 8.1 3.2l6.1-6.1A20.2 20.2 0 0 0 24 3 21 21 0 0 0 5 14.5l7 5.4a12.7 12.7 0 0 1 12-8.6Z"/>
+        </svg>
+    </button>
+    <button type="submit" name="provider" value="@ExternalAccounts.Facebook"
+            aria-label="Đăng nhập bằng Facebook" title="Facebook"
+            disabled="@(!facebookReady || !Context.Request.IsHttps)">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="12" r="12" fill="#0866FF"/>
+            <path fill="#fff" d="M13.7 24V14.7h3.1l.5-3.6h-3.6V8.8c0-1 .3-1.8 1.8-1.8h1.9V3.8c-.3 0-1.5-.1-2.8-.1-2.8 0-4.7 1.7-4.7 4.8v2.6H6.8v3.6h3.1v9.1a12 12 0 0 0 3.8.2Z"/>
+        </svg>
+    </button>
+</form>

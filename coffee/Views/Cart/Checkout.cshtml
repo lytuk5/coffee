@@ -1,0 +1,48 @@
+@model CheckoutViewModel
+@{
+    ViewData["Title"] = "Thông tin giao hàng";
+}
+
+<partial name="_CartContents" model="Model.Items" />
+<dialog id="checkout-dialog" class="login-dialog checkout-dialog" aria-labelledby="checkout-dialog-title"
+        data-back="@Url.Action("Index", "Cart")" open>
+    <div class="login-dialog-heading">
+        <h2 id="checkout-dialog-title">Thông tin giao hàng</h2>
+        <a class="login-dialog-close" asp-action="Index" aria-label="Đóng hộp thoại">×</a>
+    </div>
+    <p class="checkout-dialog-total">Tổng cộng <strong>@Money.Format(Model.Total)</strong></p>
+    <form method="post" asp-action="Checkout" class="checkout-dialog-form" novalidate>
+        <div asp-validation-summary="ModelOnly" class="admin-validation"></div>
+        <div class="checkout-form-group">
+            <label asp-for="RecipientName"></label>
+            <input asp-for="RecipientName" placeholder="Nguyễn Văn A" />
+            <span asp-validation-for="RecipientName" class="field-validation-error"></span>
+        </div>
+        <div class="checkout-form-group">
+            <label asp-for="RecipientPhone"></label>
+            <input asp-for="RecipientPhone" type="tel" placeholder="09xxxxxxxx" />
+            <span asp-validation-for="RecipientPhone" class="field-validation-error"></span>
+        </div>
+        <div class="checkout-form-group">
+            <label asp-for="Address"></label>
+            <textarea asp-for="Address" rows="2" placeholder="Số nhà, đường, phường/xã..."></textarea>
+            <span asp-validation-for="Address" class="field-validation-error"></span>
+        </div>
+        <div class="checkout-form-group">
+            <label asp-for="Note"></label>
+            <textarea asp-for="Note" rows="3" placeholder="Ví dụ: giao tại bàn số 5, gọi trước khi đến..."></textarea>
+        </div>
+        <div class="checkout-form-group">
+            <label asp-for="PaymentMethod"></label>
+            <select asp-for="PaymentMethod">
+                <option value="cash">Tiền mặt khi nhận</option>
+                <option value="transfer">Chuyển khoản</option>
+            </select>
+        </div>
+
+        <div class="modal-actions" style="margin-top:16px;">
+            <a class="btn-secondary" asp-action="Index">Quay lại giỏ hàng</a>
+            <button type="submit" class="btn-primary">Xác nhận đặt hàng</button>
+        </div>
+    </form>
+</dialog>
