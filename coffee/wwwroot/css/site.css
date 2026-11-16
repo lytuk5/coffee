@@ -298,8 +298,8 @@ a.btn-block {
 }
 
 .order-card .status-delivered {
-    background: #e3f4e7;
-    color: #215732;
+    background: var(--color-selected-bg);
+    color: var(--color-selected-text);
 }
 
 .order-admin-actions {
@@ -471,15 +471,28 @@ a.btn-block {
     color: #fff;
 }
 
-.chat-message p {
+.chat-message-text {
+    display: block;
+    color: inherit;
+    text-align: start;
+    overflow-wrap: anywhere;
     white-space: pre-wrap;
     font-size: .88rem;
 }
 
-.chat-message time {
+.chat-message-row {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+
+.chat-message-row time:not([hidden]) {
     display: block;
-    margin-top: .15rem;
-    font-size: .7rem;
+    align-self: center;
+    margin: .15rem 0 .45rem;
+    color: var(--color-text-muted);
+    font-size: .75rem;
+    font-weight: 600;
 }
 
 .chat-compose {
@@ -525,7 +538,7 @@ a.btn-block {
 }
 
 .availability-switch[aria-checked="true"] {
-    background: #287448;
+    background: var(--color-success);
 }
 
 .availability-switch[aria-checked="true"]::before {
@@ -582,4 +595,125 @@ a.btn-block {
     align-items: center;
     justify-content: flex-start;
     gap: 1rem;
+}
+
+.chat-unread:not([hidden]) {
+    display: grid;
+    place-items: center;
+    width: auto;
+    min-width: 1.25rem;
+    height: 1.25rem;
+    padding: 0 .2rem;
+    color: #fff;
+    font-size: .7rem;
+    font-weight: 700;
+}
+
+.chat-selecting .chat-message:not(.chat-selected) {
+    opacity: .25;
+}
+
+.chat-selected {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+}
+
+.chat-delete[hidden] {
+    display: none;
+}
+
+.chat-message-text {
+    touch-action: pan-y;
+}
+
+.chat-count:not([hidden]) {
+    display: inline-block;
+    min-width: 1.25rem;
+    padding: .1rem .25rem;
+    border-radius: 999px;
+    background: #a52029;
+    text-align: center;
+    font-size: .72rem;
+}
+
+.menu-detail-image {
+    position: relative;
+}
+
+.menu-badges {
+    position: absolute;
+    top: .65rem;
+    right: .65rem;
+    display: grid;
+    justify-items: end;
+    gap: .25rem;
+}
+
+.menu-hot-badge {
+    padding: .2rem .45rem;
+    border-radius: 999px;
+    background: var(--color-danger);
+    color: #fff;
+    font-size: .72rem;
+    font-weight: 700;
+}
+
+.hot-switch[aria-checked="true"] {
+    background: var(--color-danger);
+}
+
+.menu-price {
+    display: inline-grid;
+    justify-items: start;
+}
+
+.menu-regular-price {
+    color: var(--color-text-muted);
+    font-size: .8em;
+    font-weight: 500;
+}
+
+.menu-sale-price {
+    color: var(--color-danger);
+    font-weight: 700;
+}
+
+.menu-size-prices {
+    list-style: none;
+}
+
+.menu-size-prices li {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    margin-bottom: .35rem;
+}
+
+.admin-saved-photos {
+    margin-top: 1.5rem;
+    scroll-margin-top: calc(var(--header-height) + 1rem);
+}
+
+.admin-photo-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(7.5rem, 1fr));
+    gap: .75rem;
+}
+
+.admin-photo img {
+    display: block;
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    border-radius: var(--radius-sm);
+    margin-bottom: .35rem;
+}
+
+.admin-photo .btn-secondary {
+    padding: .4rem .65rem;
+}
+
+.admin-photo span {
+    font-size: .8rem;
+    color: var(--color-text-muted);
 }

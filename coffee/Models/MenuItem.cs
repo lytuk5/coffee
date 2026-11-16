@@ -21,6 +21,11 @@ public class MenuItem
 
     public string ImageUrl { get; set; } = "";
     public bool IsSoldOut { get; set; }
+    public bool IsHot { get; set; }
+    public int? DiscountPercent { get; set; }
+
+    public int SalePrice(int regularPrice) =>
+        (int)Math.Round(regularPrice * (100m - (DiscountPercent ?? 0)) / 100m, MidpointRounding.AwayFromZero);
 
     [System.ComponentModel.DataAnnotations.Schema.NotMapped]
     public bool HasSizes => Sizes.Count > 0;

@@ -1,4 +1,4 @@
-﻿/* assets/css/customer.css */
+/* assets/css/customer.css */
 
 /* ==========================================================
    THỰC ĐƠN (MENU)
@@ -45,9 +45,9 @@
 }
 
     .category-tab.active {
-        background-color: var(--color-primary);
-        border-color: var(--color-primary);
-        color: #fff;
+        background-color: var(--color-selected-bg);
+        border-color: var(--color-selected-border);
+        color: var(--color-selected-text);
     }
 
 .menu-grid {
@@ -57,6 +57,8 @@
 }
 
 .menu-item-card {
+    display: flex;
+    flex-direction: column;
     background-color: var(--color-bg-card);
     border-radius: var(--radius-md);
     overflow: hidden;
@@ -70,6 +72,7 @@
     }
 
 .menu-item-image {
+    flex: none;
     position: relative;
     width: 100%;
     aspect-ratio: 4 / 3;
@@ -101,6 +104,10 @@
 }
 
 .menu-item-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
     padding: 14px 16px;
 }
 
@@ -115,15 +122,17 @@
     font-size: 12px;
     color: var(--color-text-muted);
     margin-bottom: 12px;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
+    line-height: 1.5;
+    min-height: 1.5em;
+    white-space: nowrap;
     overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .menu-item-footer {
+    margin-top: auto;
     display: flex;
-    align-items: center;
+    align-items: end;
     justify-content: space-between;
 }
 

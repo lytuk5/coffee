@@ -9,8 +9,11 @@
     <a class="btn-secondary" asp-action="Index" asp-route-category="@category?.Id">Về thực đơn</a>
     <div class="menu-detail">
         <div data-menu-gallery>
-            <img class="menu-detail-photo" data-gallery-main src="@Model.Photos[0]" alt="@item.Name"
+            <div class="menu-detail-image">
+                <img class="menu-detail-photo" data-gallery-main src="@Model.Photos[0]" alt="@item.Name"
                  onerror="this.onerror=null;this.src='/images/menu/placeholder.svg'" />
+                <partial name="_Badges" model="item" />
+            </div>
             @if (Model.Photos.Count > 1)
             {
                 <div class="menu-thumbnails" role="group" aria-label="Ảnh món">
@@ -33,23 +36,23 @@
             <p>@item.Description</p>
             <p><strong>@(item.IsSoldOut ? "Hết hàng" : "Còn hàng")</strong></p>
 
-            @if (item.IsSoldOut)
+            @if (item.HasSizes)
             {
-                @if (item.HasSizes)
-                {
-                    <ul>
-                        @foreach (var size in item.Sizes.OrderBy(size => size.Label == "M" ? 0 : 1))
-                        {
-                            <li>@size.Label — @Money.Format(size.Price)</li>
-                        }
-                    </ul>
-                }
-                else
-                {
-                    <p class="menu-item-price">@Money.Format(item.Price)</p>
-                }
+                <ul class="menu-size-prices">
+                    @foreach (var size in item.Sizes.OrderBy(size => size.Label))
+                    {
+                        <li>
+                            <span>Size @size.Label</span>
+                            <partial name="_Price" model="@((size.Price, item.SalePrice(size.Price), ""))" />
+                        </li>
+                    }
+                </ul>
             }
             else
+            {
+                <partial name="_Price" model="@((item.Price, item.SalePrice(item.Price), ""))" />
+            }
+            @if (!item.IsSoldOut)
             {
                 <form class="admin-form menu-detail-form" method="post" asp-controller="Cart" asp-action="Add">
                     <input type="hidden" name="itemId" value="@item.Id" />
@@ -60,13 +63,9 @@
                         <select id="size" name="size">
                             @foreach (var size in item.Sizes.OrderBy(size => size.Label == "M" ? 0 : 1))
                             {
-                                <option value="@size.Label">@size.Label — @Money.Format(size.Price)</option>
+                                <option value="@size.Label">@size.Label — @Money.Format(item.SalePrice(size.Price))</option>
                             }
                         </select>
-                    }
-                    else
-                    {
-                        <p class="menu-item-price">@Money.Format(item.Price)</p>
                     }
                     <label for="quantity">Số lượng</label>
                     <input id="quantity" type="number" name="quantity" value="1" min="1" max="99" required />

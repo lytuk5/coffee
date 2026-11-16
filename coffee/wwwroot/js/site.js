@@ -123,6 +123,32 @@
         });
     }
 
+    const promotion = document.getElementById("promotion-dialog");
+    if (promotion) {
+        const form = promotion.querySelector("form");
+        const discount = form.elements.discountPercent;
+        const hasDiscount = form.elements.hasDiscount;
+        function updateDiscountInput() {
+            promotion.querySelector("[data-promotion-discount]").hidden = !hasDiscount.checked;
+            discount.disabled = !hasDiscount.checked;
+            discount.required = hasDiscount.checked;
+        }
+
+        document.querySelectorAll("[data-promotion]").forEach(button => {
+            button.addEventListener("click", () => {
+                form.elements.id.value = button.dataset.id;
+                form.elements.isHot.checked = button.dataset.hot === "true";
+                discount.value = button.dataset.discount || "";
+                hasDiscount.checked = discount.value !== "";
+                promotion.querySelector("h2").textContent = button.dataset.name;
+                updateDiscountInput();
+                promotion.showModal();
+            });
+        });
+        hasDiscount.addEventListener("change", updateDiscountInput);
+        promotion.querySelector("[data-promotion-close]").addEventListener("click", () => promotion.close());
+    }
+
     const checkoutDialog = document.getElementById("checkout-dialog");
     if (checkoutDialog && typeof checkoutDialog.showModal === "function") {
         checkoutDialog.removeAttribute("open");
@@ -132,13 +158,41 @@
 
     document.querySelectorAll("[data-menu-gallery]").forEach((gallery) => {
         const mainPhoto = gallery.querySelector("[data-gallery-main]");
-        const thumbnails = gallery.querySelectorAll("[data-gallery-photo]");
-        thumbnails.forEach((thumbnail) => {
+        const thumbnails = Array.from(gallery.querySelectorAll("[data-gallery-photo]"));
+        if (thumbnails.length < 2) return;
+
+        const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+        let selected = 0;
+        let timer;
+
+        function show(index) {
+            selected = index;
+            mainPhoto.src = thumbnails[index].dataset.galleryPhoto;
+            if (!reducedMotion.matches) {
+                mainPhoto.animate([{ opacity: .55 }, { opacity: 1 }], { duration: 260 });
+            }
+            thumbnails.forEach((photo, position) => {
+                photo.setAttribute("aria-pressed", String(position === index));
+            });
+        }
+
+        function schedule() {
+            clearTimeout(timer);
+            if (reducedMotion.matches || document.hidden) return;
+            timer = setTimeout(() => {
+                show((selected + 1) % thumbnails.length);
+                schedule();
+            }, 3500);
+        }
+
+        thumbnails.forEach((thumbnail, index) => {
             thumbnail.addEventListener("click", () => {
-                mainPhoto.src = thumbnail.dataset.galleryPhoto;
-                thumbnails.forEach((photo) => photo.setAttribute("aria-pressed", String(photo === thumbnail)));
+                show(index);
+                schedule();
             });
         });
+        document.addEventListener("visibilitychange", schedule);
+        schedule();
     });
 
     // ---------- Hộp thoại chọn size / số lượng / ghi chú ----------

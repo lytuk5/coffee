@@ -38,12 +38,13 @@
 
         @foreach (var item in Model.Items)
         {
-            var sizesJson = JsonSerializer.Serialize(item.Sizes.Select(s => new { label = s.Label, price = s.Price }));
+            var sizesJson = JsonSerializer.Serialize(item.Sizes.Select(s => new { label = s.Label, price = item.SalePrice(s.Price) }));
 
             <div class="menu-item-card @(item.IsSoldOut ? "is-sold-out" : "")">
                 <a class="menu-item-image menu-detail-link" asp-action="Details" asp-route-id="@item.Id">
                     <img src="@item.ImageUrl" alt="@item.Name" loading="lazy"
                          onerror="this.onerror=null;this.src='/images/menu/placeholder.svg'" />
+                    <partial name="_Badges" model="item" />
                     @if (item.IsSoldOut)
                     {
                         <span class="sold-out-badge">Hết hàng</span>
@@ -51,23 +52,21 @@
                 </a>
                 <div class="menu-item-info">
                     <h3 class="menu-item-name"><a class="menu-detail-link" asp-action="Details" asp-route-id="@item.Id">@item.Name</a></h3>
-                    <p class="menu-item-desc">@item.Description</p>
+                    <p class="menu-item-desc"><a asp-action="Details" asp-route-id="@item.Id">@item.Description</a></p>
                     <div class="menu-item-footer">
-                        <span class="menu-item-price">
-                            @(item.HasSizes ? "Từ " + Money.Format(item.BasePrice) : Money.Format(item.Price))
-                        </span>
+                        <partial name="_Price" model="@((item.BasePrice, item.SalePrice(item.BasePrice), item.HasSizes ? "Từ " : ""))" />
                         <div class="menu-item-actions">
                             <button type="button" class="btn-icon-action" title="Thêm vào giỏ hàng"
                                     data-open-item data-mode="cart"
                                     data-id="@item.Id" data-name="@item.Name" data-image="@item.ImageUrl"
-                                    data-price="@item.Price" data-sizes="@sizesJson"
+                                    data-price="@item.SalePrice(item.Price)" data-sizes="@sizesJson"
                                     disabled="@item.IsSoldOut">
                                 <span aria-hidden="true">🛒</span>
                             </button>
                             <button type="button" class="btn-icon-action" title="Mua ngay"
                                     data-open-item data-mode="buyNow"
                                     data-id="@item.Id" data-name="@item.Name" data-image="@item.ImageUrl"
-                                    data-price="@item.Price" data-sizes="@sizesJson"
+                                    data-price="@item.SalePrice(item.Price)" data-sizes="@sizesJson"
                                     disabled="@item.IsSoldOut">
                                 <span aria-hidden="true">🚚</span>
                             </button>

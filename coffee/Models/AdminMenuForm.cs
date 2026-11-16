@@ -27,3 +27,5 @@ public class AdminMenuForm
 
     public bool IsSoldOut { get; set; }
 }
+
+public record AdminMenuPhoto(Guid? Id, string Url, bool IsCover);

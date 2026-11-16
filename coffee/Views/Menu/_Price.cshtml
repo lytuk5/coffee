@@ -1,0 +1,12 @@
+@model (int Regular, int Current, string Prefix)
+<span class="menu-item-price menu-price">
+    @if (Model.Current != Model.Regular)
+    {
+        <s class="menu-regular-price">@Money.Format(Model.Regular)</s>
+        <strong class="menu-sale-price">@Model.Prefix@Money.Format(Model.Current)</strong>
+    }
+    else
+    {
+        <span>@Model.Prefix@Money.Format(Model.Regular)</span>
+    }
+</span>

@@ -1,6 +1,7 @@
 @model AdminMenuForm
 @{
     var itemId = ViewData["ItemId"] as string;
+    var photos = ViewData["SavedPhotos"] as List<AdminMenuPhoto> ?? new();
     ViewData["Title"] = itemId is null ? "Thêm món" : "Sửa món";
 }
 
@@ -39,4 +40,26 @@
             <a class="btn-secondary" asp-action="Index">Quay lại</a>
         </div>
     </form>
+    @if (photos.Count > 0)
+    {
+        <div class="admin-form admin-saved-photos" id="edit-photos">
+            <h3>Ảnh hiện tại</h3>
+            <div class="admin-photo-grid">
+                @foreach (var photo in photos)
+                {
+                    <div class="admin-photo">
+                        <img src="@photo.Url" alt="" loading="lazy" />
+                        <form method="post" asp-action="DeletePhoto" asp-route-id="@itemId">
+                            <input type="hidden" name="photoId" value="@photo.Id" />
+                            <button class="btn-secondary" type="submit" data-confirm="Xóa ảnh này khỏi món?">Xóa ảnh</button>
+                        </form>
+                        @if (photo.IsCover)
+                        {
+                            <span>Ảnh bìa</span>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    }
 </section>

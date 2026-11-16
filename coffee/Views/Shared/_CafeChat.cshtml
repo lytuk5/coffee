@@ -4,7 +4,7 @@
 <div class="cafe-chat" data-cafe-chat data-role="@(chatAdmin ? "admin" : "customer")" data-hub="@Url.Content("~/cafe-chat")">
     <section class="chat-panel" id="cafe-chat-panel" aria-labelledby="cafe-chat-title" hidden>
         <header class="chat-header">
-            <h2 id="cafe-chat-title">@(chatAdmin ? "Trò chuyện với khách" : "Trò chuyện với quán")</h2>
+            <h2 id="cafe-chat-title">@(chatAdmin ? "Trò chuyện với khách" : "Trò chuyện với quán") <span class="chat-count" data-chat-count hidden></span></h2>
             <button type="button" data-chat-minimize aria-label="Thu nhỏ khung chat">−</button>
         </header>
         @if (chatAdmin)

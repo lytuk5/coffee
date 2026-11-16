@@ -55,7 +55,7 @@ public class CartController : Controller
         {
             ItemId = item.Id,
             Name = item.Name,
-            Price = price,
+            Price = item.SalePrice(price),
             ImageUrl = item.ImageUrl,
             Note = note?.Trim() ?? "",
             Size = sizeLabel,
@@ -180,8 +180,9 @@ public class CartController : Controller
                 return false;
             }
 
-            pricesChanged |= item.Price != price.Value;
-            item.Price = price.Value;
+            var salePrice = current.SalePrice(price.Value);
+            pricesChanged |= item.Price != salePrice;
+            item.Price = salePrice;
             item.Name = current.Name;
         }
 

@@ -43,6 +43,7 @@ public class CafeDbContext(DbContextOptions<CafeDbContext> options) : DbContext(
                 item.CategoryId,
                 item.Price,
                 item.ImageUrl,
+                item.IsHot,
                 item.IsSoldOut
             }));
             menu.OwnsMany(item => item.Sizes, sizes =>

@@ -11,7 +11,7 @@
     <div class="admin-table-wrap">
         <table class="admin-table">
             <thead>
-                <tr><th>Món</th><th>Giá</th><th>Trạng thái</th><th>Thao tác</th></tr>
+                <tr><th>Món</th><th>Giá</th><th>Trạng thái</th><th>Khuyến mãi</th><th>Thao tác</th></tr>
             </thead>
             <tbody>
             @foreach (var item in Model)
@@ -31,6 +31,13 @@
                         </div>
                     </td>
                     <td>
+                        <button class="availability-switch hot-switch" type="button" role="switch" aria-haspopup="dialog"
+                                aria-checked="@(item.IsHot || item.DiscountPercent.HasValue ? "true" : "false")"
+                                aria-label="Khuyến mãi cho @item.Name"
+                                data-promotion data-id="@item.Id" data-name="@item.Name"
+                                data-hot="@(item.IsHot ? "true" : "false")" data-discount="@item.DiscountPercent"></button>
+                    </td>
+                    <td>
                         <div class="admin-actions">
                             <a asp-action="Edit" asp-route-id="@item.Id" class="btn-secondary">Sửa</a>
                             <a asp-controller="Menu" asp-action="Details" asp-route-id="@item.Id" asp-fragment="reviews" class="btn-secondary">Đánh giá</a>
@@ -46,3 +53,21 @@
         </table>
     </div>
 </section>
+
+
+<dialog id="promotion-dialog" class="login-dialog" aria-labelledby="promotion-title">
+    <div class="login-dialog-heading">
+        <h2 id="promotion-title">Khuyến mãi</h2>
+        <button type="button" class="login-dialog-close" data-promotion-close aria-label="Đóng">×</button>
+    </div>
+    <form method="post" asp-action="SetPromotion" class="admin-form">
+        <input type="hidden" name="id" />
+        <label><input type="checkbox" name="isHot" value="true" /> Gắn nhãn HOT</label>
+        <label><input type="checkbox" name="hasDiscount" value="true" /> Giảm giá khuyến mãi</label>
+        <div data-promotion-discount hidden>
+            <label for="discount-percent">Mức giảm (%)</label>
+            <input id="discount-percent" name="discountPercent" type="number" min="1" max="100" step="1" />
+        </div>
+        <button class="btn-primary" type="submit">Lưu</button>
+    </form>
+</dialog>

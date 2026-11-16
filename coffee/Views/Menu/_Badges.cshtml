@@ -1,0 +1,14 @@
+@model MenuItem
+@if (Model.IsHot || Model.DiscountPercent.HasValue)
+{
+    <span class="menu-badges">
+        @if (Model.IsHot)
+        {
+            <span class="menu-hot-badge">HOT</span>
+        }
+        @if (Model.DiscountPercent is int discount)
+        {
+            <span class="menu-hot-badge">-@(discount)%</span>
+        }
+    </span>
+}

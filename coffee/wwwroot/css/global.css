@@ -1,19 +1,22 @@
-﻿/* assets/css/global.css */
+/* assets/css/global.css */
 
 :root {
-    --color-primary: #6f4e37;
-    --color-primary-dark: #4a3222;
-    --color-primary-light: #a67c52;
-    --color-accent: #d4a373;
-    --color-bg: #faf6f1;
-    --color-bg-card: #ffffff;
-    --color-text: #2e2018;
-    --color-text-muted: #7a6a5e;
-    --color-border: #e5dcd2;
-    --color-success: #4caf50;
+    --color-primary: #B83246;
+    --color-primary-dark: #902638;
+    --color-primary-light: #E88A91;
+    --color-accent: #E9AC75;
+    --color-bg: #FFF6ED;
+    --color-bg-card: #FFFCF8;
+    --color-text: #3F2A23;
+    --color-text-muted: #72574D;
+    --color-border: #EAD8CA;
+    --color-success: #287448;
     --color-warning: #ff9800;
-    --color-danger: #e53935;
+    --color-danger: #BE2029;
     --color-info: #2196f3;
+    --color-selected-bg: #E2F2E3;
+    --color-selected-text: #24563B;
+    --color-selected-border: #BCDCC5;
     --radius-sm: 6px;
     --radius-md: 12px;
     --radius-lg: 20px;
@@ -90,10 +93,29 @@ a {
 
 .header-container {
     height: 100%;
-    padding: 0 24px;
-    display: flex;
+    padding: 0 10px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
     align-items: center;
-    gap: 24px;
+    gap: 8px;
+}
+
+.header-container > .logo-area {
+    grid-column: 1;
+    justify-self: start;
+}
+
+.header-container > .nav-login,
+.header-container > .nav-logout {
+    grid-column: 3;
+    grid-row: 1;
+    justify-self: end;
+}
+
+.header-container > .main-nav,
+.header-container > .mobile-menu-toggle {
+    grid-column: 2;
+    grid-row: 1;
 }
 
 .logo-area {
@@ -122,7 +144,7 @@ a {
     display: flex;
     align-items: center;
     gap: 4px;
-    flex: 1;
+    justify-content: center;
 }
 
 .nav-divider {
@@ -139,7 +161,7 @@ a {
     padding: 10px 14px;
     border-radius: var(--radius-sm);
     font-size: 14px;
-    font-weight: 500;
+    font-weight: 700;
     color: var(--color-text-muted);
     position: relative;
     transition: background-color 0.2s, color 0.2s;
@@ -152,8 +174,8 @@ a {
     }
 
     .nav-btn.nav-active {
-        background-color: var(--color-primary);
-        color: #fff;
+        background-color: var(--color-selected-bg);
+        color: var(--color-selected-text);
     }
 
 .nav-icon {
@@ -356,7 +378,7 @@ a {
    ========================================================== */
 .view {
     max-width: 1280px;
-    margin: 0 auto 0 0;
+    margin: 0 auto;
     padding: 24px;
     min-height: calc(100vh - var(--header-height));
 }
@@ -407,11 +429,6 @@ a {
         display: block;
     }
 
-    .header-container {
-        padding: 0 14px;
-        gap: 12px;
-    }
-
     .logo-img {
         width: 32px;
         height: 32px;
@@ -428,7 +445,7 @@ a {
         right: 0;
         background-color: var(--color-bg-card);
         flex-direction: column;
-        align-items: stretch;
+        align-items: center;
         box-shadow: var(--shadow-md);
         max-height: 0;
         overflow: hidden;
@@ -481,17 +498,8 @@ a {
    RESPONSIVE - ĐIỆN THOẠI MÀN HÌNH RẤT NHỎ
    ========================================================== */
 @media (max-width: 420px) {
-    .header-container {
-        padding: 0 10px;
-        gap: 8px;
-    }
-
-    /* Ẩn chữ "Dưa hấu coffee", chỉ giữ logo tròn để tiết kiệm diện tích
-     trên các màn hình quá nhỏ (dưới 420px) */
-    .logo-text {
-        display: none;
-    }
-
+    .logo-area { gap: 5px; }
+    .logo-text { font-size: 12px; }
     .toast-container {
         left: 12px;
         right: 12px;

@@ -32,6 +32,8 @@ erDiagram
         nvarchar ImageUrl
         int Price
         bit IsSoldOut
+        bit IsHot
+        int DiscountPercent
     }
     MenuSizes {
         nvarchar MenuItemId PK, FK

@@ -131,9 +131,15 @@ namespace do_an_1.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int?>("DiscountPercent")
+                        .HasColumnType("int");
+
                     b.Property<string>("ImageUrl")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsHot")
+                        .HasColumnType("bit");
 
                     b.Property<bool>("IsSoldOut")
                         .HasColumnType("bit");
@@ -156,6 +162,7 @@ namespace do_an_1.Migrations
                             CategoryId = "ca-phe",
                             Description = "Cà phê phin truyền thống, đậm đà.",
                             ImageUrl = "/images/menu/ca-phe-den.jpg",
+                            IsHot = false,
                             IsSoldOut = false,
                             Name = "Cà phê đen",
                             Price = 0
@@ -166,6 +173,7 @@ namespace do_an_1.Migrations
                             CategoryId = "ca-phe",
                             Description = "Cà phê phin pha sữa đặc béo ngọt.",
                             ImageUrl = "/images/menu/ca-phe-sua.jpg",
+                            IsHot = false,
                             IsSoldOut = false,
                             Name = "Cà phê sữa",
                             Price = 0
@@ -176,6 +184,7 @@ namespace do_an_1.Migrations
                             CategoryId = "ca-phe",
                             Description = "Nhiều sữa, ít cà phê, vị nhẹ dễ uống.",
                             ImageUrl = "/images/menu/bac-xiu.jpg",
+                            IsHot = false,
                             IsSoldOut = false,
                             Name = "Bạc xỉu",
                             Price = 0
@@ -186,6 +195,7 @@ namespace do_an_1.Migrations
                             CategoryId = "ca-phe",
                             Description = "Espresso với lớp bọt sữa mịn.",
                             ImageUrl = "/images/menu/cappuccino.jpg",
+                            IsHot = false,
                             IsSoldOut = false,
                             Name = "Cappuccino",
                             Price = 45000
@@ -196,6 +206,7 @@ namespace do_an_1.Migrations
                             CategoryId = "tra",
                             Description = "Trà đào thanh mát, thêm cam và sả thơm.",
                             ImageUrl = "/images/menu/tra-dao-cam-sa.jpg",
+                            IsHot = false,
                             IsSoldOut = false,
                             Name = "Trà đào cam sả",
                             Price = 0
@@ -206,6 +217,7 @@ namespace do_an_1.Migrations
                             CategoryId = "tra",
                             Description = "Trà sữa truyền thống với trân châu dai giòn.",
                             ImageUrl = "/images/menu/tra-sua-tran-chau.jpg",
+                            IsHot = false,
                             IsSoldOut = false,
                             Name = "Trà sữa trân châu",
                             Price = 0
@@ -216,6 +228,7 @@ namespace do_an_1.Migrations
                             CategoryId = "tra",
                             Description = "Trà xanh kết hợp vải thiều ngọt thanh.",
                             ImageUrl = "/images/menu/tra-vai.jpeg",
+                            IsHot = false,
                             IsSoldOut = false,
                             Name = "Trà vải",
                             Price = 38000
@@ -226,6 +239,7 @@ namespace do_an_1.Migrations
                             CategoryId = "sinh-to",
                             Description = "Dưa hấu xay mịn, mát lạnh giải nhiệt.",
                             ImageUrl = "/images/menu/sinh-to-dua-hau.jpg",
+                            IsHot = false,
                             IsSoldOut = false,
                             Name = "Sinh tố dưa hấu",
                             Price = 0
@@ -236,6 +250,7 @@ namespace do_an_1.Migrations
                             CategoryId = "sinh-to",
                             Description = "Cam tươi vắt nguyên chất.",
                             ImageUrl = "/images/menu/nuoc-ep-cam.jpg",
+                            IsHot = false,
                             IsSoldOut = false,
                             Name = "Nước ép cam",
                             Price = 40000
@@ -246,6 +261,7 @@ namespace do_an_1.Migrations
                             CategoryId = "sinh-to",
                             Description = "Bơ sáp xay cùng sữa, béo mịn.",
                             ImageUrl = "/images/menu/sinh-to-bo.webp",
+                            IsHot = false,
                             IsSoldOut = false,
                             Name = "Sinh tố bơ",
                             Price = 45000
@@ -256,6 +272,7 @@ namespace do_an_1.Migrations
                             CategoryId = "banh",
                             Description = "Bánh tiramisu vị cà phê và cacao.",
                             ImageUrl = "/images/menu/tiramisu.jpg",
+                            IsHot = false,
                             IsSoldOut = false,
                             Name = "Tiramisu",
                             Price = 45000
@@ -266,6 +283,7 @@ namespace do_an_1.Migrations
                             CategoryId = "banh",
                             Description = "Bánh sừng bò bơ giòn xốp.",
                             ImageUrl = "/images/menu/banh-croissant.jpg",
+                            IsHot = false,
                             IsSoldOut = true,
                             Name = "Bánh croissant",
                             Price = 35000

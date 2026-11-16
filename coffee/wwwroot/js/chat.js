@@ -8,6 +8,7 @@
     const launcher = widget.querySelector("[data-chat-open]");
     const minimize = widget.querySelector("[data-chat-minimize]");
     const unread = widget.querySelector("[data-chat-unread]");
+    const chatCount = widget.querySelector("[data-chat-count]");
     const picker = widget.querySelector("[data-chat-customer]");
     const status = widget.querySelector("[data-chat-status]");
     const list = widget.querySelector("[data-chat-messages]");
@@ -23,13 +24,14 @@
         launcher.hidden = true;
         launcher.setAttribute("aria-expanded", "true");
         panel.hidden = false;
-        unread.hidden = true;
+        markRead();
         list.scrollTop = list.scrollHeight;
         if (!input.disabled) input.focus();
         else minimize.focus();
     });
 
     minimize.addEventListener("click", () => {
+        selectForDeletion(null);
         panel.hidden = true;
         launcher.hidden = false;
         launcher.setAttribute("aria-expanded", "false");
@@ -46,15 +48,86 @@
         .withAutomaticReconnect({ nextRetryDelayInMilliseconds: () => 3000 })
         .build();
     const messages = new Map();
+    const expandedDates = new Set();
     const deletedMessages = new Set();
     const conversations = new Map();
     const drafts = new Map();
-    const unreadConversations = new Set();
+    const unreadConversations = new Map();
+    let messageToDelete = null;
     let selected = null;
     let connected = false;
     let sending = false;
     let selectVersion = 0;
     let refreshVersion = 0;
+
+    function updateUnread() {
+        const count = [...unreadConversations.values()].reduce((total, ids) => total + ids.size, 0);
+        unread.hidden = count === 0;
+        unread.textContent = count > 99 ? "99+" : String(count);
+        chatCount.hidden = count === 0;
+        chatCount.textContent = unread.textContent;
+        launcher.setAttribute("aria-label", count ? `Mở trò chuyện, ${count} tin chưa đọc` : "Mở trò chuyện");
+    }
+
+    function markRead() {
+        unreadConversations.delete(isAdmin ? selected : null);
+        updateUnread();
+        if (isAdmin) renderConversations();
+    }
+
+    function selectForDeletion(id) {
+        messageToDelete = id;
+        list.classList.toggle("chat-selecting", id !== null);
+        list.querySelectorAll(".chat-message").forEach(item => {
+            const active = item.dataset.messageId === String(id);
+            item.classList.toggle("chat-selected", active);
+            const remove = item.querySelector(".chat-delete");
+            if (remove) remove.hidden = !active;
+        });
+    }
+
+    panel.addEventListener("click", event => {
+        if (!event.target.closest(".chat-selected")) selectForDeletion(null);
+    });
+
+    panel.addEventListener("keydown", event => {
+        if (event.key === "Escape") selectForDeletion(null);
+    });
+
+    function watchLongPress(button, id) {
+        let timer;
+        let origin;
+        let held = false;
+        const cancel = () => {
+            clearTimeout(timer);
+            origin = null;
+        };
+
+        button.addEventListener("pointerdown", event => {
+            if (event.button !== 0) return;
+            held = false;
+            origin = { x: event.clientX, y: event.clientY };
+            timer = setTimeout(() => {
+                held = true;
+                selectForDeletion(id);
+            }, 500);
+        });
+        button.addEventListener("pointermove", event => {
+            if (origin && Math.hypot(event.clientX - origin.x, event.clientY - origin.y) > 10)
+                cancel();
+        });
+        ["pointerup", "pointercancel", "pointerleave"].forEach(name => button.addEventListener(name, cancel));
+        button.addEventListener("contextmenu", event => {
+            event.preventDefault();
+            cancel();
+            selectForDeletion(id);
+        });
+        button.addEventListener("click", event => {
+            if (!held) return;
+            event.stopImmediatePropagation();
+            held = false;
+        }, { capture: true });
+    }
 
     function updateControls() {
         if (picker) picker.disabled = !connected || conversations.size === 0 || sending;
@@ -65,7 +138,8 @@
     function renderConversations() {
         const options = [new Option(conversations.size ? "Chọn khách hàng" : "Chưa có cuộc trò chuyện", "")];
         for (const [id, name] of conversations) {
-            options.push(new Option(unreadConversations.has(id) ? name + " (tin mới)" : name, id));
+            const count = unreadConversations.get(id)?.size ?? 0;
+            options.push(new Option(count ? `${name} (${count})` : name, id));
         }
         picker.replaceChildren(...options);
         if (selected && !conversations.has(selected)) {
@@ -97,19 +171,36 @@
         });
         const ordered = Array.from(messages.values()).sort((a, b) => a.id - b.id);
         const removed = ordered.splice(0, Math.max(0, ordered.length - 100));
-        removed.forEach(message => messages.delete(message.id));
+        removed.forEach(message => {
+            messages.delete(message.id);
+            expandedDates.delete(message.id);
+        });
 
         list.replaceChildren(...ordered.map((message) => {
-            const item = document.createElement("li");
+            const row = document.createElement("li");
+            row.className = "chat-message-row";
+            const item = document.createElement("div");
+            item.dataset.messageId = message.id;
             item.className = message.fromAdmin === isAdmin ? "chat-message chat-own" : "chat-message";
 
-            const text = document.createElement("p");
+            const text = document.createElement("button");
+            text.type = "button";
+            text.className = "chat-message-text";
             text.textContent = message.text;
             const time = document.createElement("time");
             time.dateTime = message.sentAt;
             time.textContent = timeFormat.format(new Date(message.sentAt));
-            item.append(text, time);
+            time.hidden = !expandedDates.has(message.id);
+            text.setAttribute("aria-expanded", String(!time.hidden));
+            text.addEventListener("click", () => {
+                time.hidden = !time.hidden;
+                text.setAttribute("aria-expanded", String(!time.hidden));
+                if (time.hidden) expandedDates.delete(message.id);
+                else expandedDates.add(message.id);
+            });
+            item.append(text);
             if (isAdmin && !message.fromAdmin) {
+                watchLongPress(text, message.id);
                 const remove = document.createElement("button");
                 remove.type = "button";
                 remove.className = "chat-delete";
@@ -130,9 +221,11 @@
                 });
                 item.append(remove);
             }
-            return item;
+            row.append(time, item);
+            return row;
         }));
 
+        selectForDeletion(messages.has(messageToDelete) ? messageToDelete : null);
         list.scrollTop = scrollToEnd || wasAtEnd ? list.scrollHeight : oldTop;
     }
 
@@ -149,7 +242,7 @@
             if (selected) drafts.set(selected, input.value);
             selected = picker.value || null;
             input.value = drafts.get(selected) || "";
-            unreadConversations.delete(selected);
+            markRead();
             messages.clear();
             displayMessages([]);
             renderConversations();
@@ -165,11 +258,16 @@
     connection.on("MessageReceived", (message) => {
         const inCurrentChat = !isAdmin || selected === message.customerAccountId;
         const isIncoming = message.fromAdmin !== isAdmin;
-        if (isIncoming && panel.hidden) unread.hidden = false;
+        if (isIncoming && (panel.hidden || !inCurrentChat)) {
+            const key = isAdmin ? message.customerAccountId : null;
+            if (!unreadConversations.has(key)) unreadConversations.set(key, new Set());
+            unreadConversations.get(key).add(message.id);
+            updateUnread();
+        }
 
         if (inCurrentChat) displayMessages([message]);
         if (isAdmin && !inCurrentChat && isIncoming) {
-            unreadConversations.add(message.customerAccountId);
+
             if (conversations.has(message.customerAccountId)) renderConversations();
             else loadConversations().catch(() => {
                 if (connected) status.textContent = "Chưa thể tải danh sách khách.";
@@ -179,6 +277,9 @@
 
     function removeMessage(customerId, messageId) {
         deletedMessages.add(messageId);
+        expandedDates.delete(messageId);
+        unreadConversations.get(isAdmin ? customerId : null)?.delete(messageId);
+        updateUnread();
         if (messages.delete(messageId)) displayMessages([]);
         if (isAdmin) loadConversations().catch(() => {
             if (connected) status.textContent = "Chưa thể tải danh sách khách.";
