@@ -7,6 +7,7 @@
     const panel = widget.querySelector(".chat-panel");
     const launcher = widget.querySelector("[data-chat-open]");
     const minimize = widget.querySelector("[data-chat-minimize]");
+    const notice = widget.querySelector("[data-chat-notice]");
     const unread = widget.querySelector("[data-chat-unread]");
     const chatCount = widget.querySelector("[data-chat-count]");
     const picker = widget.querySelector("[data-chat-customer]");
@@ -53,6 +54,7 @@
     const conversations = new Map();
     const drafts = new Map();
     const unreadConversations = new Map();
+    let notifiedChat = null;
     let messageToDelete = null;
     let selected = null;
     let connected = false;
@@ -62,6 +64,7 @@
 
     function updateUnread() {
         const count = [...unreadConversations.values()].reduce((total, ids) => total + ids.size, 0);
+        notice.hidden = !unreadConversations.get(notifiedChat)?.size;
         unread.hidden = count === 0;
         unread.textContent = count > 99 ? "99+" : String(count);
         chatCount.hidden = count === 0;
@@ -74,6 +77,15 @@
         updateUnread();
         if (isAdmin) renderConversations();
     }
+
+    notice.addEventListener("click", () => {
+        if (picker && notifiedChat !== selected && conversations.has(notifiedChat) && connected && !sending) {
+            picker.value = notifiedChat;
+            picker.dispatchEvent(new Event("change"));
+        }
+        if (panel.hidden) launcher.click();
+        else minimize.focus();
+    });
 
     function selectForDeletion(id) {
         messageToDelete = id;
@@ -255,19 +267,27 @@
         });
     }
 
-    connection.on("MessageReceived", (message) => {
+    connection.on("MessageReceived", (message, senderName) => {
         const inCurrentChat = !isAdmin || selected === message.customerAccountId;
         const isIncoming = message.fromAdmin !== isAdmin;
+        if (isAdmin && isIncoming && senderName && !conversations.has(message.customerAccountId))
+            conversations.set(message.customerAccountId, senderName);
+
         if (isIncoming && (panel.hidden || !inCurrentChat)) {
             const key = isAdmin ? message.customerAccountId : null;
             if (!unreadConversations.has(key)) unreadConversations.set(key, new Set());
-            unreadConversations.get(key).add(message.id);
+            const ids = unreadConversations.get(key);
+            if (!ids.has(message.id)) {
+                ids.add(message.id);
+                notifiedChat = key;
+                const name = isAdmin ? senderName || conversations.get(key) || "Khách hàng" : "Dưa Hấu Coffee";
+                notice.textContent = "Tin nhắn mới từ " + name;
+            }
             updateUnread();
         }
 
         if (inCurrentChat) displayMessages([message]);
-        if (isAdmin && !inCurrentChat && isIncoming) {
-
+        if (isAdmin && isIncoming) {
             if (conversations.has(message.customerAccountId)) renderConversations();
             else loadConversations().catch(() => {
                 if (connected) status.textContent = "Chưa thể tải danh sách khách.";

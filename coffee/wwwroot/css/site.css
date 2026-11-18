@@ -362,15 +362,48 @@ a.btn-block {
     display: none;
 }
 
-.chat-unread {
+.chat-unread:not([hidden]) {
     position: absolute;
-    top: .25rem;
-    right: .25rem;
-    width: .65rem;
-    height: .65rem;
+    top: -.25rem;
+    right: -.25rem;
+    display: grid;
+    place-items: center;
+    min-width: 1.35rem;
+    height: 1.35rem;
+    padding: 0 .25rem;
     border: 1px solid #fff;
-    border-radius: 50%;
-    background: #d33439;
+    border-radius: 999px;
+    background: #ad192e;
+    color: white;
+    font-size: .75rem;
+    font-weight: 700;
+}
+
+.chat-notice-area {
+    position: absolute;
+    right: calc(100% + .5rem);
+    bottom: .3rem;
+}
+
+.chat-notice:not([hidden]) {
+    display: block;
+    width: max-content;
+    max-width: min(17rem, calc(100vw - 6rem));
+    padding: .6rem .85rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    background: var(--color-bg-card);
+    color: var(--color-text);
+    text-align: left;
+    overflow-wrap: anywhere;
+    box-shadow: var(--shadow-md);
+}
+
+.cafe-chat:has(.chat-panel:not([hidden])) .chat-notice-area {
+    top: 3.75rem;
+    right: .75rem;
+    bottom: auto;
+    z-index: 1;
 }
 
 .chat-panel {

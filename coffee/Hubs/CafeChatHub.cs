@@ -72,7 +72,7 @@ public class CafeChatHub(CafeDbContext database) : Hub
 
         database.ChatMessages.Add(message);
         await database.SaveChangesAsync(Context.ConnectionAborted);
-        await Clients.Groups(AdminGroup, CustomerGroup(conversation)).SendAsync("MessageReceived", message);
+        await Clients.Groups(AdminGroup, CustomerGroup(conversation)).SendAsync("MessageReceived", message, IsAdmin ? null : Context.User?.Identity?.Name);
         return message;
     }
 

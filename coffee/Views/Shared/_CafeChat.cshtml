@@ -2,6 +2,9 @@
     var chatAdmin = User.IsInRole("Admin");
 }
 <div class="cafe-chat" data-cafe-chat data-role="@(chatAdmin ? "admin" : "customer")" data-hub="@Url.Content("~/cafe-chat")">
+    <div class="chat-notice-area" aria-live="polite">
+        <button class="chat-notice" type="button" data-chat-notice hidden></button>
+    </div>
     <section class="chat-panel" id="cafe-chat-panel" aria-labelledby="cafe-chat-title" hidden>
         <header class="chat-header">
             <h2 id="cafe-chat-title">@(chatAdmin ? "Trò chuyện với khách" : "Trò chuyện với quán") <span class="chat-count" data-chat-count hidden></span></h2>
