@@ -1,5 +1,9 @@
 @model LoginForm
 <div data-account-content data-title="Đăng nhập">
+    @if (TempData["PasswordResetSuccess"] is string message)
+    {
+        <p role="status">@message</p>
+    }
     <form data-account-form method="post" asp-controller="Account" asp-action="Login" class="admin-form">
         <div asp-validation-summary="All" class="admin-validation login-validation" role="alert"></div>
         <input type="hidden" asp-for="ReturnUrl" />
@@ -12,6 +16,7 @@
         </div>
         <button class="btn-primary">Đăng nhập</button>
         <p><a data-account-view asp-controller="Account" asp-action="Register" asp-route-returnUrl="@Model.ReturnUrl">Đăng ký</a></p>
+        <p><a data-account-view asp-action="ForgotPassword" asp-controller="Account" asp-route-returnUrl="@Model.ReturnUrl">Quên mật khẩu?</a></p>
     </form>
     <partial name="~/Views/Account/_ExternalButtons.cshtml" model="Model.ReturnUrl" />
 </div>

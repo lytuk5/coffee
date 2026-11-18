@@ -13,7 +13,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CafeDuaHau.Controllers;
 
-public class AccountController(CafeDbContext database, CartService cart, IAuthenticationSchemeProvider schemes) : Controller
+public partial class AccountController(CafeDbContext database, CartService cart, IAuthenticationSchemeProvider schemes) : Controller
 {
     [HttpGet]
     public IActionResult Login(string? returnUrl, bool externalError = false)

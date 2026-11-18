@@ -26,6 +26,17 @@ public class RegisterForm : LoginForm
     public string ConfirmPassword { get; set; } = "";
 }
 
+public sealed class ForgotPasswordForm : LoginForm
+{
+    [Required, StringLength(512)]
+    public string? ResetToken { get; set; }
+
+    [Required(ErrorMessage = "Vui lòng nhập lại mật khẩu mới.")]
+    [Compare(nameof(Password), ErrorMessage = "Hai mật khẩu không khớp.")]
+    public string ConfirmPassword { get; set; } = "";
+}
+
+
 public class ExternalPhoneForm
 {
     public const string PhonePattern = "0[0-9]{9}";

@@ -3,6 +3,7 @@
     var standalone = ViewData["AccountDialogModel"] is not null;
     var (title, formPath) = Model switch
     {
+        ForgotPasswordForm => ("Quên mật khẩu", "~/Views/Account/_ForgotPasswordForm.cshtml"),
         RegisterForm => ("Đăng ký tài khoản khách", "~/Views/Account/_RegisterForm.cshtml"),
         ExternalPhoneForm => ("Bổ sung số điện thoại", "~/Views/Account/_ExternalPhoneForm.cshtml"),
         _ => ("Đăng nhập", "~/Views/Account/_LoginForm.cshtml")
