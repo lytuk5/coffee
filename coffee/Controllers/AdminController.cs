@@ -14,8 +14,29 @@ public class AdminController(CafeDbContext database) : Controller
     public IActionResult Login() => RedirectToAction("Login", "Account");
 
     [HttpGet]
-    public IActionResult Index() =>
-        View(database.MenuItems.AsNoTracking().OrderBy(item => item.CategoryId).ThenBy(item => item.Name).ToList());
+    public IActionResult Index(string? q, string? category, int page = 1)
+    {
+        const int pageSize = 10;
+        var keyword = q?.Trim();
+        var items = database.MenuItems.AsNoTracking();
+
+        if (!string.IsNullOrEmpty(keyword))
+            items = items.Where(item => item.Name.Contains(keyword));
+        if (!string.IsNullOrEmpty(category))
+            items = items.Where(item => item.CategoryId == category);
+
+        var total = items.Count();
+        var pageCount = Math.Max(1, (int)Math.Ceiling(total / (double)pageSize));
+        page = Math.Clamp(page, 1, pageCount);
+        ViewData["Keyword"] = keyword;
+        ViewData["Category"] = category;
+        ViewData["Page"] = page;
+        ViewData["Total"] = total;
+        ViewData["PageCount"] = pageCount;
+
+        return View(items.OrderBy(item => item.CategoryId).ThenBy(item => item.Name).ThenBy(item => item.Id)
+            .Skip((page - 1) * pageSize).Take(pageSize).ToList());
+    }
 
     [HttpGet]
     public IActionResult Edit(string? id)

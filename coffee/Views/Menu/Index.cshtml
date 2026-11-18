@@ -6,7 +6,17 @@
     var returnUrl = Context.Request.Path + Context.Request.QueryString;
 }
 
-<section class="view view-menu">
+<section class="coffee-hero" aria-labelledby="coffee-hero-title">
+    <div class="coffee-hero-photo coffee-hero-left"></div>
+    <div class="coffee-hero-copy">
+        <h1 id="coffee-hero-title">Tươi mát mỗi ngày</h1>
+        <p>Trải nghiệm hương vị tự nhiên<br />từ Dưa hấu &amp; Cà phê</p>
+        <a class="btn-primary" href="#thuc-don">Đặt ngay</a>
+    </div>
+    <div class="coffee-hero-photo coffee-hero-right"></div>
+</section>
+
+<section id="thuc-don" class="view view-menu coffee-menu">
     <div class="view-header">
         <h2>Thực đơn</h2>
     </div>
@@ -14,7 +24,8 @@
     <form method="get" asp-controller="Menu" asp-action="Index" class="menu-toolbar">
         <input type="hidden" name="category" value="@Model.ActiveCategory" />
         <input type="text" name="q" value="@Model.Keyword" class="menu-search-input"
-               placeholder="Tìm kiếm món ăn, thức uống..." />
+               placeholder="Tìm kiếm món ăn, thức uống..." aria-label="Tìm món" />
+        <button type="submit" aria-label="Tìm kiếm" class="coffee-search-button">⌕</button>
     </form>
 
     <div class="category-tabs">
@@ -61,7 +72,7 @@
                                     data-id="@item.Id" data-name="@item.Name" data-image="@item.ImageUrl"
                                     data-price="@item.SalePrice(item.Price)" data-sizes="@sizesJson"
                                     disabled="@item.IsSoldOut">
-                                <span aria-hidden="true">🛒</span>
+                                <span aria-hidden="true">+</span>
                             </button>
                             <button type="button" class="btn-icon-action" title="Mua ngay"
                                     data-open-item data-mode="buyNow"

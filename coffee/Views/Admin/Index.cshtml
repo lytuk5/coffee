@@ -1,12 +1,24 @@
+@using CafeDuaHau.Data
 @model List<MenuItem>
 @{
     ViewData["Title"] = "Quản lý thực đơn";
 }
 
-<section class="view">
+<section class="view coffee-admin">
     <div class="view-header"><h2>Quản lý thực đơn</h2></div>
-    <div class="admin-actions">
-        <a asp-action="Edit" class="btn-primary">Thêm món</a>
+    <div class="coffee-admin-toolbar">
+        <a asp-action="Edit" class="btn-primary">+ Thêm món</a>
+        <form method="get" asp-action="Index" class="coffee-admin-filters">
+            <input name="q" value="@ViewData["Keyword"]" placeholder="Tìm kiếm món ăn..." aria-label="Tìm món" />
+            <select name="category" aria-label="Danh mục">
+                <option value="">Tất cả danh mục</option>
+                @foreach (var category in MenuData.Categories)
+                {
+                    <option value="@category.Id" selected="@Equals(ViewData["Category"], category.Id)">@category.Name</option>
+                }
+            </select>
+            <button type="submit" class="btn-secondary">Tìm</button>
+        </form>
     </div>
     <div class="admin-table-wrap">
         <table class="admin-table">
@@ -14,6 +26,10 @@
                 <tr><th>Món</th><th>Giá</th><th>Trạng thái</th><th>Khuyến mãi</th><th>Thao tác</th></tr>
             </thead>
             <tbody>
+            @if (Model.Count == 0)
+            {
+                <tr><td colspan="5">Không tìm thấy món phù hợp.</td></tr>
+            }
             @foreach (var item in Model)
             {
                 <tr>
@@ -21,7 +37,7 @@
                     <td>@(item.HasSizes ? string.Join(" / ", item.Sizes.OrderByDescending(size => size.Label).Select(size => $"{size.Label} {Money.Format(size.Price)}")) : Money.Format(item.Price))</td>
                     <td>
                         <div class="admin-actions">
-                            <span>@(item.IsSoldOut ? "Hết hàng" : "Còn hàng")</span>
+                            <span class="@(item.IsSoldOut ? "coffee-stock-out" : "coffee-stock-in")">@(item.IsSoldOut ? "Hết hàng" : "Còn hàng")</span>
                             <form method="post" asp-action="SetAvailability" asp-route-id="@item.Id">
                                 <input type="hidden" name="isSoldOut" value="@((!item.IsSoldOut).ToString().ToLowerInvariant())" />
                                 <button class="availability-switch" type="submit" role="switch"
@@ -51,6 +67,26 @@
             }
             </tbody>
         </table>
+    </div>
+    @{
+        var currentPage = (int)(ViewData["Page"] ?? 1);
+        var total = (int)(ViewData["Total"] ?? 0);
+        var pageCount = (int)(ViewData["PageCount"] ?? 1);
+        var first = total == 0 ? 0 : (currentPage - 1) * 10 + 1;
+    }
+    <div class="coffee-admin-pagination">
+        <span>Hiển thị @first–@(total == 0 ? 0 : first + Model.Count - 1) trên @total mục</span>
+        @if (pageCount > 1)
+        {
+            <nav aria-label="Phân trang thực đơn">
+                @for (var number = 1; number <= pageCount; number++)
+                {
+                    <a asp-action="Index" asp-route-page="@number" asp-route-q="@ViewData["Keyword"]"
+                       asp-route-category="@ViewData["Category"]"
+                       aria-current="@(number == currentPage ? "page" : null)">@number</a>
+                }
+            </nav>
+        }
     </div>
 </section>
 
