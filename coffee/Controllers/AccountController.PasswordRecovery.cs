@@ -1,132 +1,100 @@
-using System.Net;
-using System.Net.Mail;
-using Microsoft.AspNetCore.RateLimiting;
-using System.Security.Cryptography;
 using CafeDuaHau.Models;
 using CafeDuaHau.Services;
-using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 
 namespace CafeDuaHau.Controllers;
 
 public partial class AccountController
 {
+    private const string ResetSessionKey = "CustomerPasswordReset";
+
     [HttpGet]
     [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
-    public IActionResult ForgotPassword(string? returnUrl, string? userName, string? token)
-    {
-        Response.Headers["Referrer-Policy"] = "no-referrer";
-        if (User.Identity?.IsAuthenticated == true)
-            return SignedInDestination(returnUrl, User.IsInRole("Admin"));
-
-        return AccountView(nameof(ForgotPassword), new ForgotPasswordForm
-        {
-            ReturnUrl = returnUrl,
-            UserName = userName ?? "",
-            ResetToken = token
-        });
-    }
-
-    [HttpPost]
-    [EnableRateLimiting("password-reset-mail")]
-    public async Task<IActionResult> SendResetLink(string? userName, string? returnUrl,
-        [FromServices] IConfiguration configuration, [FromServices] IDataProtectionProvider protection,
-        [FromServices] ILogger<AccountController> logger)
+    public IActionResult ForgotPassword(string? userName, string? returnUrl, [FromServices] PasswordResetRequests requests)
     {
         if (User.Identity?.IsAuthenticated == true)
             return SignedInDestination(returnUrl, User.IsInRole("Admin"));
 
-        var form = new ForgotPasswordForm { UserName = userName ?? "", ReturnUrl = returnUrl };
-        ViewData["ResetRequestSent"] = true;
-        var normalized = userName?.Trim().ToUpperInvariant();
-        var settings = configuration.GetSection("PasswordReset");
-        var sender = settings["Sender"];
-        var password = settings["AppPassword"];
-        if (normalized is { Length: > 0 and <= 64 } &&
-            MailAddress.TryCreate(sender, out var from) &&
-            !string.IsNullOrWhiteSpace(password) &&
-            Uri.TryCreate(settings["BaseUrl"], UriKind.Absolute, out var baseUrl) &&
-            baseUrl.Scheme == Uri.UriSchemeHttps)
-        {
-            var customer = await FindLocalCustomer(normalized);
-            var email = settings.GetSection("Recipients")[normalized];
-            if (customer is not null && MailAddress.TryCreate(email, out var recipient))
-            {
-                var token = PasswordRecovery.ForAccount(protection, customer).Protect("reset", TimeSpan.FromMinutes(20));
-                var path = Url.Action(nameof(ForgotPassword), "Account", new { userName = customer.UserName, token })!;
-                using var message = new MailMessage(from, recipient)
-                {
-                    Subject = "Đặt lại mật khẩu Dưa Hấu Coffee",
-                    Body = $"Mở liên kết sau để đặt lại mật khẩu trong 20 phút:\n{new Uri(baseUrl, path)}\n\nNếu bạn không yêu cầu, hãy bỏ qua email này."
-                };
-                using var smtp = new SmtpClient("smtp.gmail.com", 587)
-                {
-                    EnableSsl = true,
-                    Credentials = new NetworkCredential(from.Address, password.Replace(" ", ""))
-                };
-                using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(15));
-                try
-                {
-                    await smtp.SendMailAsync(message, timeout.Token);
-                }
-                catch (Exception error) when (error is SmtpException or OperationCanceledException)
-                {
-                    logger.LogWarning("Không thể gửi email đặt lại mật khẩu qua Gmail. Loại lỗi: {ErrorType}", error.GetType().Name);
-                }
-            }
-        }
+        var request = CurrentReset(requests);
+        if (request?.Approved == true)
+            return AccountView(nameof(ResetPassword), new ResetPasswordForm { ReturnUrl = returnUrl });
 
-        return AccountView(nameof(ForgotPassword), form);
+        ViewData["ResetReference"] = GetResetId() is var id && id != Guid.Empty ? id.ToString("N")[..8] : null;
+        return AccountView(nameof(ForgotPassword), new ForgotPasswordForm { UserName = userName ?? "", ReturnUrl = returnUrl });
     }
 
     [HttpPost]
-    [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
-    public async Task<IActionResult> ForgotPassword(ForgotPasswordForm form, [FromServices] IDataProtectionProvider protection)
+    [EnableRateLimiting("password-reset")]
+    public async Task<IActionResult> ForgotPassword(ForgotPasswordForm form, [FromServices] PasswordResetRequests requests)
+    {
+        if (User.Identity?.IsAuthenticated == true)
+            return SignedInDestination(form.ReturnUrl, User.IsInRole("Admin"));
+        if (!ModelState.IsValid)
+            return AccountView(nameof(ForgotPassword), form);
+
+        var previousId = GetResetId();
+        if (previousId != Guid.Empty)
+            requests.Remove(previousId);
+
+        var id = Guid.NewGuid();
+        var normalized = form.UserName.Trim().ToUpperInvariant();
+        var customer = await database.CustomerAccounts.AsNoTracking().SingleOrDefaultAsync(account =>
+            account.NormalizedUserName == normalized && account.PhoneNumber == form.PhoneNumber &&
+            account.ExternalProvider == null && account.PasswordHash != "");
+
+        if (customer is not null)
+            requests.Add(new(id, customer.Id, customer.UserName, form.PhoneNumber, customer.PasswordHash));
+
+        HttpContext.Session.SetString(ResetSessionKey, id.ToString());
+        return RedirectToAction(nameof(ForgotPassword), new { returnUrl = form.ReturnUrl });
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> ResetPassword(ResetPasswordForm form, [FromServices] PasswordResetRequests requests)
     {
         if (User.Identity?.IsAuthenticated == true)
             return SignedInDestination(form.ReturnUrl, User.IsInRole("Admin"));
 
-        if (ModelState.IsValid && form.Password.Length < 8)
-            ModelState.AddModelError(nameof(form.Password), "Mật khẩu phải có ít nhất 8 ký tự.");
+        if (CurrentReset(requests) is not { Approved: true } request)
+            return RedirectToAction(nameof(ForgotPassword), new { returnUrl = form.ReturnUrl });
+
         if (!ModelState.IsValid)
-            return AccountView(nameof(ForgotPassword), form);
+            return AccountView(nameof(ResetPassword), form);
 
-        var normalized = form.UserName.Trim().ToUpperInvariant();
-        var customer = await FindLocalCustomer(normalized);
+        var passwordHash = new PasswordHasher<CustomerAccount>().HashPassword(new CustomerAccount { Id = request.CustomerId }, form.Password);
+        var updated = await database.CustomerAccounts
+            .Where(account => account.Id == request.CustomerId && account.PasswordHash == request.PasswordHash &&
+                account.PhoneNumber == request.PhoneNumber && account.ExternalProvider == null)
+            .ExecuteUpdateAsync(change => change.SetProperty(account => account.PasswordHash, passwordHash));
 
-        if (customer is not null && form.ResetToken is { Length: > 0 and <= 512 } token && ValidRecoveryCode(protection, customer, token))
-        {
-            var newHash = new PasswordHasher<CustomerAccount>().HashPassword(customer, form.Password);
-            var updated = await database.CustomerAccounts
-                .Where(account => account.Id == customer.Id && account.PasswordHash == customer.PasswordHash)
-                .ExecuteUpdateAsync(change => change.SetProperty(account => account.PasswordHash, newHash));
+        requests.Remove(request.Id);
+        HttpContext.Session.Remove(ResetSessionKey);
+        if (updated != 1)
+            return RedirectToAction(nameof(ForgotPassword), new { returnUrl = form.ReturnUrl });
 
-            if (updated == 1)
-            {
-                TempData["PasswordResetSuccess"] = "Đã đổi mật khẩu. Bạn có thể đăng nhập bằng mật khẩu mới.";
-                return RedirectToAction(nameof(Login), new { returnUrl = form.ReturnUrl });
-            }
-        }
-
-        ModelState.AddModelError("", "Liên kết đặt lại mật khẩu không hợp lệ hoặc đã hết hạn.");
-        return AccountView(nameof(ForgotPassword), form);
+        TempData["PasswordResetSuccess"] = "Đã đổi mật khẩu. Hãy đăng nhập bằng mật khẩu mới.";
+        return RedirectToAction(nameof(Login), new { returnUrl = form.ReturnUrl });
     }
 
-    private Task<CustomerAccount?> FindLocalCustomer(string normalized) =>
-        database.CustomerAccounts.AsNoTracking().SingleOrDefaultAsync(account =>
-            account.NormalizedUserName == normalized && account.ExternalProvider == null && account.PasswordHash != "");
+    [Authorize(Roles = "Admin")]
+    [HttpGet]
+    [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
+    public IActionResult PasswordRequests([FromServices] PasswordResetRequests requests) => View(requests.Pending());
 
-    private static bool ValidRecoveryCode(IDataProtectionProvider protection, CustomerAccount customer, string code)
+    [Authorize(Roles = "Admin")]
+    [HttpPost]
+    public IActionResult ApprovePasswordRequest(Guid id, [FromServices] PasswordResetRequests requests)
     {
-        try
-        {
-            return PasswordRecovery.ForAccount(protection, customer).Unprotect(code) == "reset";
-        }
-        catch (CryptographicException)
-        {
-            return false;
-        }
+        requests.Approve(id);
+        return RedirectToAction(nameof(PasswordRequests));
     }
+
+    private Guid GetResetId() =>
+        Guid.TryParse(HttpContext.Session.GetString(ResetSessionKey), out var id) ? id : Guid.Empty;
+
+    private PasswordResetRequests.Request? CurrentReset(PasswordResetRequests requests) => requests.Get(GetResetId());
 }

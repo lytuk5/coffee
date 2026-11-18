@@ -16,7 +16,7 @@
         </div>
         <button class="btn-primary">Đăng nhập</button>
         <p><a data-account-view asp-controller="Account" asp-action="Register" asp-route-returnUrl="@Model.ReturnUrl">Đăng ký</a></p>
-        <p><a data-account-view asp-action="ForgotPassword" asp-controller="Account" asp-route-returnUrl="@Model.ReturnUrl">Quên mật khẩu?</a></p>
+        <p><a data-account-view asp-controller="Account" asp-action="ForgotPassword" asp-route-userName="@Model.UserName" asp-route-returnUrl="@Model.ReturnUrl">Quên mật khẩu?</a></p>
     </form>
     <partial name="~/Views/Account/_ExternalButtons.cshtml" model="Model.ReturnUrl" />
 </div>

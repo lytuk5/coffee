@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.RateLimiting;
+using System.Threading.RateLimiting;
 using CafeDuaHau.Hubs;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using CafeDuaHau.Data;
@@ -17,14 +18,16 @@ var authentication = builder.Services.AddAuthentication(CookieAuthenticationDefa
     });
 authentication.AddExternalAccounts(builder.Configuration);
 builder.Services.AddAuthorization();
+builder.Services.AddSingleton<PasswordResetRequests>();
 builder.Services.AddRateLimiter(options =>
 {
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
-    options.AddFixedWindowLimiter("password-reset-mail", limiter =>
-    {
-        limiter.PermitLimit = 5;
-        limiter.Window = TimeSpan.FromMinutes(1);
-    });
+    options.AddPolicy("password-reset", context =>
+        RateLimitPartition.GetFixedWindowLimiter(context.Connection.RemoteIpAddress, _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 5,
+            Window = TimeSpan.FromMinutes(5)
+        }));
 });
 builder.Services.AddSignalR();
 

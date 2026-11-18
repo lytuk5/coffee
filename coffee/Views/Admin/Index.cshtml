@@ -5,7 +5,10 @@
 }
 
 <section class="view coffee-admin">
-    <div class="view-header"><h2>Quản lý thực đơn</h2></div>
+    <div class="view-header">
+        <h2>Quản lý thực đơn</h2>
+        <a asp-controller="Account" asp-action="PasswordRequests" class="btn-secondary">Yêu cầu đặt lại mật khẩu</a>
+    </div>
     <div class="coffee-admin-toolbar">
         <a asp-action="Edit" class="btn-primary">+ Thêm món</a>
         <form method="get" asp-action="Index" class="coffee-admin-filters">
