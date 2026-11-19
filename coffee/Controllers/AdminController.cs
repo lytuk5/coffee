@@ -42,7 +42,7 @@ public class AdminController(CafeDbContext database) : Controller
     public IActionResult Edit(string? id)
     {
         if (id is null)
-            return View(new AdminMenuForm());
+            return MenuFormView(new AdminMenuForm());
 
         var item = database.MenuItems.AsNoTracking().SingleOrDefault(item => item.Id == id);
         if (item is null)
@@ -58,6 +58,7 @@ public class AdminController(CafeDbContext database) : Controller
             Price = item.HasSizes ? null : item.Price,
             MediumPrice = item.Sizes.SingleOrDefault(size => size.Label == "M")?.Price,
             LargePrice = item.Sizes.SingleOrDefault(size => size.Label == "L")?.Price,
+            ExtraLargePrice = item.Sizes.SingleOrDefault(size => size.Label == "XL")?.Price,
             IsSoldOut = item.IsSoldOut
         });
     }
@@ -68,9 +69,12 @@ public class AdminController(CafeDbContext database) : Controller
         if (!MenuData.Categories.Any(category => category.Id == form.CategoryId))
             ModelState.AddModelError(nameof(form.CategoryId), "Danh mục không hợp lệ.");
 
-        var hasSizes = form.MediumPrice.HasValue || form.LargePrice.HasValue;
+        var hasSizes = form.MediumPrice.HasValue || form.LargePrice.HasValue || form.ExtraLargePrice.HasValue;
         if (form.Price.HasValue == hasSizes)
             ModelState.AddModelError("", "Nhập giá chung hoặc giá theo size M/L.");
+
+        if (hasSizes && !form.MediumPrice.HasValue)
+            ModelState.AddModelError(nameof(form.MediumPrice), "Vui lòng nhập giá size M để làm giá mặc định.");
 
         ViewData["ItemId"] = id;
         await using var transaction = await database.Database.BeginTransactionAsync(cancellationToken);
@@ -83,14 +87,14 @@ public class AdminController(CafeDbContext database) : Controller
         var savedPhotos = GetSavedPhotos(item);
         ViewData["SavedPhotos"] = savedPhotos;
         if (!ModelState.IsValid)
-            return View(form);
+            return MenuFormView(form);
 
         var nextPosition = await database.MenuPhotos.Where(photo => photo.MenuItemId == item.Id)
             .Select(photo => (int?)photo.Position).MaxAsync(cancellationToken) ?? 0;
         if (form.Photos.Count > 5 || savedPhotos.Count(photo => photo.Id.HasValue) + form.Photos.Count > 8)
         {
             ModelState.AddModelError(nameof(form.Photos), "Chọn tối đa 5 ảnh mỗi lần và 8 ảnh cho mỗi món.");
-            return View(form);
+            return MenuFormView(form);
         }
 
         var photos = new List<MenuPhoto>();
@@ -99,7 +103,7 @@ public class AdminController(CafeDbContext database) : Controller
             if (upload.Length is <= 0 or > 5 * 1024 * 1024)
             {
                 ModelState.AddModelError(nameof(form.Photos), "Mỗi ảnh phải nhỏ hơn hoặc bằng 5 MB.");
-                return View(form);
+                return MenuFormView(form);
             }
 
             using var buffer = new MemoryStream((int)upload.Length);
@@ -109,7 +113,7 @@ public class AdminController(CafeDbContext database) : Controller
             if (type is null)
             {
                 ModelState.AddModelError(nameof(form.Photos), "Chỉ nhận ảnh JPG, PNG hoặc WebP.");
-                return View(form);
+                return MenuFormView(form);
             }
 
             photos.Add(new MenuPhoto
@@ -131,6 +135,7 @@ public class AdminController(CafeDbContext database) : Controller
         item.IsSoldOut = form.IsSoldOut;
         SetSize(item, "M", form.MediumPrice);
         SetSize(item, "L", form.LargePrice);
+        SetSize(item, "XL", form.ExtraLargePrice);
         if (id is null)
             database.MenuItems.Add(item);
 
@@ -139,6 +144,17 @@ public class AdminController(CafeDbContext database) : Controller
         await transaction.CommitAsync(cancellationToken);
         TempData["Success"] = "Đã lưu món.";
         return RedirectToAction(nameof(Index));
+    }
+
+    private IActionResult MenuFormView(AdminMenuForm form)
+    {
+        if (Request.Headers["X-Menu-Dialog"] == "1")
+        {
+            ViewData["MenuDialog"] = true;
+            return PartialView("_MenuForm", form);
+        }
+
+        return View("Edit", form);
     }
 
     [HttpPost]

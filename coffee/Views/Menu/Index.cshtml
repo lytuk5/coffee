@@ -65,7 +65,7 @@
                     <h3 class="menu-item-name"><a class="menu-detail-link" asp-action="Details" asp-route-id="@item.Id">@item.Name</a></h3>
                     <p class="menu-item-desc"><a asp-action="Details" asp-route-id="@item.Id">@item.Description</a></p>
                     <div class="menu-item-footer">
-                        <partial name="_Price" model="@((item.BasePrice, item.SalePrice(item.BasePrice), item.HasSizes ? "Từ " : ""))" />
+                        <partial name="_Price" model="@((item.BasePrice, item.SalePrice(item.BasePrice), ""))" />
                         <div class="menu-item-actions">
                             <button type="button" class="btn-icon-action" title="Thêm vào giỏ hàng"
                                     data-open-item data-mode="cart"
@@ -108,7 +108,7 @@
             </div>
         </div>
 
-        <div id="modal-size-group" class="hidden" style="margin-bottom:14px;">
+        <div id="modal-size-group" class="hidden" style="margin-bottom:8px;">
             <div style="font-size:13px; font-weight:500; margin-bottom:8px;">Chọn size:</div>
             <div id="modal-size-list" class="size-list"></div>
         </div>

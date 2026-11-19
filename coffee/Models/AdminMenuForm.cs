@@ -23,6 +23,9 @@ public class AdminMenuForm
     [Range(1, 1000000, ErrorMessage = "Giá size L phải từ 1 đến 1.000.000 đ.")]
     public int? LargePrice { get; set; }
 
+    [Range(1, 1000000, ErrorMessage = "Giá size XL phải từ 1 đến 1.000.000 đ.")]
+    public int? ExtraLargePrice { get; set; }
+
     public List<IFormFile> Photos { get; set; } = [];
 
     public bool IsSoldOut { get; set; }

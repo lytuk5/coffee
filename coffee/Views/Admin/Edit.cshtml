@@ -10,36 +10,7 @@
         <a class="btn-secondary" asp-action="Index">Quay lại</a>
         <h2>@ViewData["Title"]</h2>
     </div>
-    <form method="post" enctype="multipart/form-data" asp-action="Edit" asp-route-id="@itemId" class="admin-form">
-        <div asp-validation-summary="All" class="admin-validation"></div>
-        <label asp-for="Name">Tên món</label>
-        <input asp-for="Name" maxlength="120" required />
-        <label asp-for="Description">Mô tả</label>
-        <textarea asp-for="Description" maxlength="500"></textarea>
-        <label asp-for="CategoryId">Danh mục</label>
-        <select asp-for="CategoryId" required>
-            <option value="">Chọn danh mục</option>
-            @foreach (var category in CafeDuaHau.Data.MenuData.Categories)
-            {
-                <option value="@category.Id">@category.Name</option>
-            }
-        </select>
-        <p>Nhập giá chung hoặc nhập giá cho từng size có bán.</p>
-        <label asp-for="Price">Giá chung (đ)</label>
-        <input asp-for="Price" min="1" max="1000000" />
-        <label asp-for="MediumPrice">Giá size M (đ)</label>
-        <input asp-for="MediumPrice" min="1" max="1000000" />
-        <label asp-for="LargePrice">Giá size L (đ)</label>
-        <input asp-for="LargePrice" min="1" max="1000000" />
-        <label asp-for="Photos">Thêm ảnh món</label>
-        <input asp-for="Photos" type="file" accept="image/jpeg,image/png,image/webp" multiple />
-        <p>JPG, PNG hoặc WebP, tối đa 5 MB mỗi ảnh. Ảnh đầu tiên được dùng làm ảnh bìa.</p>
-        <label><input asp-for="IsSoldOut" /> Hết hàng</label>
-        <div class="admin-actions">
-            <button class="btn-primary">Lưu món</button>
-            <a class="btn-secondary" asp-action="Index">Quay lại</a>
-        </div>
-    </form>
+    <partial name="_MenuForm" model="Model" />
     @if (photos.Count > 0)
     {
         <div class="admin-form admin-saved-photos" id="edit-photos">

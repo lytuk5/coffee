@@ -57,16 +57,22 @@
                 <form class="admin-form menu-detail-form" method="post" asp-controller="Cart" asp-action="Add">
                     <input type="hidden" name="itemId" value="@item.Id" />
                     <input type="hidden" name="returnUrl" value="@Context.Request.Path" />
-                    @if (item.HasSizes)
-                    {
-                        <label for="size">Kích cỡ và giá</label>
-                        <select id="size" name="size">
-                            @foreach (var size in item.Sizes.OrderBy(size => size.Label == "M" ? 0 : 1))
+                    <label for="size">Chọn size</label>
+                    <select id="size" name="size" required data-order-size>
+                        <option value="">Chọn size</option>
+                        @if (item.HasSizes)
+                        {
+                            @foreach (var size in item.Sizes.OrderBy(size => size.Label == "M" ? 0 : size.Label == "L" ? 1 : 2))
                             {
-                                <option value="@size.Label">@size.Label — @Money.Format(item.SalePrice(size.Price))</option>
+                                <option value="@size.Label" data-price="@Money.Format(item.SalePrice(size.Price))">@size.Label — @Money.Format(item.SalePrice(size.Price))</option>
                             }
-                        </select>
-                    }
+                        }
+                        else
+                        {
+                            <option value="M" data-price="@Money.Format(item.SalePrice(item.Price))">M — @Money.Format(item.SalePrice(item.Price))</option>
+                        }
+                    </select>
+                    <p data-order-size-price role="status">Vui lòng chọn size</p>
                     <label for="quantity">Số lượng</label>
                     <input id="quantity" type="number" name="quantity" value="1" min="1" max="99" required />
                     <label for="note">Ghi chú</label>

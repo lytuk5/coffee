@@ -39,7 +39,7 @@ public class CartController : Controller
         string? sizeLabel = null;
         if (item.HasSizes)
         {
-            var chosen = size == null ? item.Sizes[0] : item.Sizes.FirstOrDefault(s => s.Label == size);
+            var chosen = item.Sizes.FirstOrDefault(s => s.Label == size);
             if (chosen == null)
             {
                 TempData["Error"] = "Size đã chọn hiện không còn bán.";
@@ -47,6 +47,12 @@ public class CartController : Controller
             }
             price = chosen.Price;
             sizeLabel = chosen.Label;
+        }
+
+        if (!item.HasSizes && size != "M")
+        {
+            TempData["Error"] = "Vui lòng chọn size M trước khi đặt món.";
+            return RedirectBack(returnUrl);
         }
 
         quantity = Math.Clamp(quantity, 1, 99);

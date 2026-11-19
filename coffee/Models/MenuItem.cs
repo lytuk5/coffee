@@ -30,5 +30,5 @@ public class MenuItem
     [System.ComponentModel.DataAnnotations.Schema.NotMapped]
     public bool HasSizes => Sizes.Count > 0;
     [System.ComponentModel.DataAnnotations.Schema.NotMapped]
-    public int BasePrice => HasSizes ? Sizes.Min(s => s.Price) : Price;
+    public int BasePrice => HasSizes ? (Sizes.FirstOrDefault(s => s.Label == "M")?.Price ?? Sizes[0].Price) : Price;
 }

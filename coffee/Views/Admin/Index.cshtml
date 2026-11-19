@@ -10,7 +10,7 @@
         <a asp-controller="Account" asp-action="PasswordRequests" class="btn-secondary">Yêu cầu đặt lại mật khẩu</a>
     </div>
     <div class="coffee-admin-toolbar">
-        <a asp-action="Edit" class="btn-primary">+ Thêm món</a>
+        <a asp-action="Edit" class="btn-primary" data-add-menu>+ Thêm món</a>
         <form method="get" asp-action="Index" class="coffee-admin-filters">
             <input name="q" value="@ViewData["Keyword"]" placeholder="Tìm kiếm món ăn..." aria-label="Tìm món" />
             <select name="category" aria-label="Danh mục">
@@ -110,3 +110,15 @@
         <button class="btn-primary" type="submit">Lưu</button>
     </form>
 </dialog>
+
+<dialog class="login-dialog menu-edit-dialog" data-menu-dialog aria-labelledby="add-menu-title">
+    <div class="login-dialog-heading">
+        <h2 id="add-menu-title">Thêm món</h2>
+        <button type="button" class="login-dialog-close" data-close-menu-dialog aria-label="Đóng">×</button>
+    </div>
+    <p data-menu-dialog-error role="alert" hidden></p>
+    <div data-menu-dialog-content></div>
+</dialog>
+@section Scripts {
+    <script src="~/js/admin-menu.js" asp-append-version="true"></script>
+}

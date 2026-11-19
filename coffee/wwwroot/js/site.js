@@ -214,13 +214,14 @@
 
     function updatePrice() {
         const checked = form.querySelector('input[name="size"]:checked');
-        const price = checked ? Number(checked.dataset.price) : basePrice;
-        byId("modal-price").textContent = formatCurrency(price);
+        const price = checked ? Number(checked.dataset.price) : null;
+        byId("modal-price").textContent = price === null ? "Vui lòng chọn size" : formatCurrency(price);
     }
 
     function openModal(button) {
         const isBuyNow = button.dataset.mode === "buyNow";
         const sizes = JSON.parse(button.dataset.sizes || "[]");
+        if (sizes.length === 0) sizes.push({ label: "M", price: Number(button.dataset.price) });
 
         field("itemId").value = button.dataset.id;
         field("buyNow").value = isBuyNow ? "true" : "false";
@@ -251,7 +252,7 @@
                 input.name = "size";
                 input.value = size.label;
                 input.dataset.price = size.price;
-                input.checked = index === 0;
+                input.required = true;
                 input.addEventListener("change", updatePrice);
 
                 const text = document.createElement("span");
@@ -293,3 +294,18 @@
         if (e.key === "Escape") closeModal();
     });
 })();
+
+document.addEventListener("change", function (event) {
+    if (!event.target.matches("[data-size-price-toggle]")) return;
+    const field = event.target.closest(".menu-size-price").querySelector("[data-size-price-field]");
+    field.hidden = !event.target.checked;
+    field.querySelector("input").disabled = !event.target.checked;
+    if (event.target.checked) field.querySelector("input").focus();
+});
+
+document.addEventListener("change", function (event) {
+    if (!event.target.matches("[data-order-size]")) return;
+    const option = event.target.selectedOptions[0];
+    event.target.form.querySelector("[data-order-size-price]").textContent =
+        option.dataset.price || "Vui lòng chọn size";
+});
