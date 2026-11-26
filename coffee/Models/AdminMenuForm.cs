@@ -14,6 +14,9 @@ public class AdminMenuForm
     [Required(ErrorMessage = "Vui lòng chọn danh mục.")]
     public string CategoryId { get; set; } = "";
 
+    public const string NewCategoryOption = "+new";
+    public string? NewCategoryName { get; set; }
+
     [Range(1, 1000000, ErrorMessage = "Giá phải từ 1 đến 1.000.000 đ.")]
     public int? Price { get; set; }
 

@@ -1,6 +1,7 @@
 @model List<Order>
 @{
     ViewData["Title"] = "Đơn của tôi";
+    var reviewableItems = (HashSet<string>)ViewData["ReviewableItems"]!;
 }
 
 <section class="view view-tracking">
@@ -28,6 +29,45 @@
                     </div>
 
                     <partial name="_OrderDetails" model="order" />
+
+                    <div class="order-followup">
+                        <form method="post" asp-action="Reorder" asp-route-id="@order.Id">
+                            <button type="submit" class="btn-secondary">Đặt lại</button>
+                        </form>
+                        @if (order.Status == OrderStatus.Delivered)
+                        {
+                            var reviewItems = order.Items.Where(item => reviewableItems.Contains(item.ItemId))
+                                .DistinctBy(item => item.ItemId).ToList();
+                            @if (reviewItems.Count > 0)
+                            {
+                                <details class="order-review">
+                                    <summary class="btn-secondary">Đánh giá món</summary>
+                                    @foreach (var item in reviewItems)
+                                    {
+                                        var ratingId = $"review-{order.Id}-{item.ItemId}";
+                                        <form method="post" asp-controller="Menu" asp-action="Review" asp-route-id="@item.ItemId"
+                                              asp-route-fromOrders="true" class="order-review-form">
+                                            <fieldset>
+                                                <legend>@item.Name</legend>
+                                                <div class="order-rating">
+                                                    @for (var star = 1; star <= 5; star++)
+                                                    {
+                                                        <label>
+                                                            <input type="radio" name="Rating" value="@star" aria-label="@star sao" required />
+                                                            <span aria-hidden="true">★</span>
+                                                        </label>
+                                                    }
+                                                </div>
+                                                <label for="@ratingId">Nhận xét</label>
+                                                <textarea id="@ratingId" name="Comment" rows="3" maxlength="1000" required></textarea>
+                                                <button type="submit" class="btn-primary">Gửi đánh giá</button>
+                                            </fieldset>
+                                        </form>
+                                    }
+                                </details>
+                            }
+                        }
+                    </div>
 
                     @if (isPending)
                     {

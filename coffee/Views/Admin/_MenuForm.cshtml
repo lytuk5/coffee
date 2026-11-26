@@ -7,13 +7,18 @@
         <label asp-for="Description">Mô tả</label>
         <textarea asp-for="Description" maxlength="500"></textarea>
         <label asp-for="CategoryId">Danh mục</label>
-        <select asp-for="CategoryId" required>
+        <select asp-for="CategoryId" data-category-select required>
             <option value="">Chọn danh mục</option>
-            @foreach (var category in CafeDuaHau.Data.MenuData.Categories)
+            @foreach (var category in (List<Category>)ViewData["Categories"]!)
             {
                 <option value="@category.Id">@category.Name</option>
             }
+            <option value="@AdminMenuForm.NewCategoryOption">+ Thêm danh mục mới</option>
         </select>
+        <div data-new-category hidden="@(Model.CategoryId != AdminMenuForm.NewCategoryOption)">
+            <label asp-for="NewCategoryName">Tên danh mục mới</label>
+            <input asp-for="NewCategoryName" maxlength="80" required disabled="@(Model.CategoryId != AdminMenuForm.NewCategoryOption)" />
+        </div>
         <label asp-for="Price">Giá chung (món không có size)</label>
         <input asp-for="Price" min="1" max="1000000" />
         <details class="menu-size-prices" open="@(Model.MediumPrice.HasValue || Model.LargePrice.HasValue || Model.ExtraLargePrice.HasValue)">

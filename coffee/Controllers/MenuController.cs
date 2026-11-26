@@ -26,7 +26,7 @@ public class MenuController(CafeDbContext database) : Controller
 
         var model = new MenuIndexViewModel
         {
-            Categories = MenuData.Categories,
+            Categories = database.Categories.AsNoTracking().OrderBy(category => category.Name).ToList(),
             Items = items.ToList(),
             ActiveCategory = active,
             Keyword = keyword
@@ -40,6 +40,9 @@ public class MenuController(CafeDbContext database) : Controller
         var item = database.MenuItems.AsNoTracking().SingleOrDefault(item => item.Id == id);
         if (item is null)
             return NotFound();
+
+        ViewData["CategoryName"] = database.Categories.Where(category => category.Id == item.CategoryId)
+            .Select(category => category.Name).SingleOrDefault();
 
         var photoIds = database.MenuPhotos
             .Where(photo => photo.MenuItemId == id)
@@ -74,7 +77,7 @@ public class MenuController(CafeDbContext database) : Controller
 
     [HttpPost]
     [Authorize(Roles = "Customer")]
-    public IActionResult Review(string id, MenuReviewForm form)
+    public IActionResult Review(string id, MenuReviewForm form, bool fromOrders = false)
     {
         if (!database.MenuItems.Any(item => item.Id == id))
             return NotFound();
@@ -105,7 +108,9 @@ public class MenuController(CafeDbContext database) : Controller
             }
         }
 
-        return RedirectToAction(nameof(Details), controllerName: null, routeValues: new { id }, fragment: "reviews");
+        return fromOrders
+            ? RedirectToAction("Index", "Orders")
+            : RedirectToAction(nameof(Details), controllerName: null, routeValues: new { id }, fragment: "reviews");
     }
 
     private bool CanReview(string itemId, Guid customerId) =>

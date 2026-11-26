@@ -56,3 +56,30 @@
         loadForm(form.action, { method: "POST", body: new FormData(form) });
     });
 }());
+
+(function () {
+    "use strict";
+    const stockFilter = document.getElementById("stock-filter");
+    const stockRows = Array.from(document.querySelectorAll("[data-stock-status]"));
+    const emptyStock = document.querySelector("[data-stock-empty]");
+
+    function filterStock() {
+        for (const row of stockRows) {
+            row.hidden = stockFilter.value !== "all" && row.dataset.stockStatus !== stockFilter.value;
+        }
+        emptyStock.hidden = stockRows.some(row => !row.hidden);
+    }
+
+    stockFilter.addEventListener("change", filterStock);
+    filterStock();
+
+    const adminMobile = window.matchMedia("(max-width: 820px)");
+    const actionMenus = document.querySelectorAll(".admin-menu-actions");
+
+    function updateActionMenus() {
+        for (const menu of actionMenus) menu.open = !adminMobile.matches;
+    }
+
+    adminMobile.addEventListener("change", updateActionMenus);
+    updateActionMenus();
+}());

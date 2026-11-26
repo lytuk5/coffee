@@ -3,6 +3,7 @@ using CafeDuaHau.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Data.SqlClient;
 
 namespace CafeDuaHau.Controllers;
 
@@ -34,6 +35,7 @@ public class AdminController(CafeDbContext database) : Controller
         ViewData["Total"] = total;
         ViewData["PageCount"] = pageCount;
 
+        LoadCategories();
         ViewData["StockItems"] = database.MenuItems.AsNoTracking().OrderBy(item => item.Name).ToList();
 
         return View(items.OrderBy(item => item.CategoryId).ThenBy(item => item.Name).ThenBy(item => item.Id)
@@ -52,7 +54,7 @@ public class AdminController(CafeDbContext database) : Controller
 
         ViewData["ItemId"] = id;
         ViewData["SavedPhotos"] = GetSavedPhotos(item);
-        return View(new AdminMenuForm
+        return MenuFormView(new AdminMenuForm
         {
             Name = item.Name,
             Description = item.Description,
@@ -67,7 +69,27 @@ public class AdminController(CafeDbContext database) : Controller
     [HttpPost]
     public async Task<IActionResult> Edit(string? id, AdminMenuForm form, CancellationToken cancellationToken)
     {
-        if (!MenuData.Categories.Any(category => category.Id == form.CategoryId))
+        var categoryId = form.CategoryId;
+        Category? newCategory = null;
+        if (categoryId == AdminMenuForm.NewCategoryOption)
+        {
+            var name = form.NewCategoryName?.Trim();
+            if (string.IsNullOrEmpty(name) || name.Length > 80)
+                ModelState.AddModelError(nameof(form.NewCategoryName), "Nhập tên danh mục từ 1 đến 80 ký tự.");
+            else
+            {
+                var existing = await database.Categories.AsNoTracking()
+                    .SingleOrDefaultAsync(category => category.Name == name, cancellationToken);
+                if (existing != null)
+                    categoryId = existing.Id;
+                else
+                {
+                    newCategory = new Category { Id = Guid.NewGuid().ToString("N"), Name = name };
+                    categoryId = newCategory.Id;
+                }
+            }
+        }
+        else if (!await database.Categories.AnyAsync(category => category.Id == categoryId, cancellationToken))
             ModelState.AddModelError(nameof(form.CategoryId), "Danh mục không hợp lệ.");
 
         var hasSizes = form.MediumPrice.HasValue || form.LargePrice.HasValue || form.ExtraLargePrice.HasValue;
@@ -131,7 +153,7 @@ public class AdminController(CafeDbContext database) : Controller
 
         item.Name = form.Name.Trim();
         item.Description = form.Description?.Trim() ?? "";
-        item.CategoryId = form.CategoryId;
+        item.CategoryId = categoryId;
         item.Price = form.Price ?? 0;
         SetSize(item, "M", form.MediumPrice);
         SetSize(item, "L", form.LargePrice);
@@ -139,15 +161,31 @@ public class AdminController(CafeDbContext database) : Controller
         if (id is null)
             database.MenuItems.Add(item);
 
+        if (newCategory != null)
+            database.Categories.Add(newCategory);
         database.MenuPhotos.AddRange(photos);
-        await database.SaveChangesAsync(cancellationToken);
-        await transaction.CommitAsync(cancellationToken);
+        try
+        {
+            await database.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+        }
+        catch (DbUpdateException error) when (newCategory != null &&
+            error.InnerException is SqlException { Number: 2601 or 2627 })
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            ModelState.AddModelError(nameof(form.NewCategoryName), "Danh mục vừa được thêm. Vui lòng chọn danh mục đó và lưu lại.");
+            return MenuFormView(form);
+        }
         TempData["Success"] = "Đã lưu món.";
         return RedirectToAction(nameof(Index));
     }
 
+    private void LoadCategories() =>
+        ViewData["Categories"] = database.Categories.AsNoTracking().OrderBy(category => category.Name).ToList();
+
     private IActionResult MenuFormView(AdminMenuForm form)
     {
+        LoadCategories();
         if (Request.Headers["X-Menu-Dialog"] == "1")
         {
             ViewData["MenuDialog"] = true;

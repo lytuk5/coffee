@@ -975,3 +975,46 @@ body:has(.menu-edit-dialog[open]) { overflow: hidden; }
     border: 1px solid var(--color-border);
     border-radius: 6px;
 }
+
+.stock-row[hidden], .admin-menu-actions > summary, .admin-mobile-label { display: none; }
+.stock-note { display: block; }
+
+@media (max-width: 650px) {
+    .coffee-admin .admin-table { display: block; min-width: 0; }
+    .coffee-admin .admin-table thead { position: absolute; clip-path: inset(50%); }
+    .coffee-admin .admin-table tbody { display: block; }
+    .coffee-admin .admin-menu-row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        padding: 8px 12px;
+        border-bottom: 1px solid var(--color-border);
+    }
+    .coffee-admin .admin-menu-row td { padding: 5px 0; border: 0; }
+    .coffee-admin .admin-menu-name { grid-column: 1 / -1; font-weight: 700; }
+    .admin-menu-promotion { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
+    .admin-mobile-label { display: inline; }
+    .admin-menu-actions > summary { display: list-item; cursor: pointer; }
+    .coffee-admin .admin-menu-actions .admin-actions { flex-wrap: wrap; margin-top: 6px; }
+    .coffee-admin .admin-menu-row td:last-child { grid-column: 1 / -1; }
+}
+
+.order-followup { display: flex; align-items: start; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
+.order-review { flex: 1; min-width: min(16rem, 100%); }
+.order-review summary { display: inline-flex; cursor: pointer; }
+.order-review-form fieldset {
+    display: grid;
+    max-width: 34rem;
+    gap: 8px;
+    margin: 12px 0 0;
+    padding: 12px;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+}
+.order-review-form legend { font-weight: 700; }
+.order-review-form textarea { padding: 8px; font: inherit; resize: vertical; }
+.order-review-form button { justify-self: start; }
+.order-rating { display: flex; flex-wrap: wrap; gap: 10px; }
+.order-rating label { cursor: pointer; }
+.order-rating label span { font-size: 1.25rem; color: var(--color-text); }
+.order-rating label:has(input:checked) span,
+.order-rating label:has(~ label input:checked) span { color: #9a5805; }

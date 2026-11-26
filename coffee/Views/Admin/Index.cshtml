@@ -1,4 +1,3 @@
-@using CafeDuaHau.Data
 @model List<MenuItem>
 @{
     ViewData["Title"] = "Quản lý thực đơn";
@@ -19,7 +18,7 @@
             <input name="q" value="@ViewData["Keyword"]" placeholder="Tìm kiếm món ăn..." aria-label="Tìm món" />
             <select name="category" aria-label="Danh mục">
                 <option value="">Tất cả danh mục</option>
-                @foreach (var category in MenuData.Categories)
+                @foreach (var category in (List<Category>)ViewData["Categories"]!)
                 {
                     <option value="@category.Id" selected="@Equals(ViewData["Category"], category.Id)">@category.Name</option>
                 }
@@ -39,13 +38,14 @@
             }
             @foreach (var item in Model)
             {
-                <tr>
-                    <td>@item.Name</td>
+                <tr class="admin-menu-row">
+                    <td class="admin-menu-name">@item.Name</td>
                     <td>@(item.HasSizes ? string.Join(" / ", item.Sizes.OrderByDescending(size => size.Label).Select(size => $"{size.Label} {Money.Format(size.Price)}")) : Money.Format(item.Price))</td>
                     <td>
                         <span class="@(item.IsSoldOut ? "coffee-stock-out" : "coffee-stock-in")">@(item.IsSoldOut ? "Hết hàng" : "Còn hàng")</span>
                     </td>
-                    <td>
+                    <td class="admin-menu-promotion">
+                        <span class="admin-mobile-label">Khuyến mãi</span>
                         <button class="availability-switch hot-switch" type="button" role="switch" aria-haspopup="dialog"
                                 aria-checked="@(item.IsHot || item.DiscountPercent.HasValue ? "true" : "false")"
                                 aria-label="Khuyến mãi cho @item.Name"
@@ -53,14 +53,17 @@
                                 data-hot="@(item.IsHot ? "true" : "false")" data-discount="@item.DiscountPercent"></button>
                     </td>
                     <td>
-                        <div class="admin-actions">
-                            <a asp-action="Edit" asp-route-id="@item.Id" class="btn-secondary">Sửa</a>
-                            <a asp-controller="Menu" asp-action="Details" asp-route-id="@item.Id" asp-fragment="reviews" class="btn-secondary">Đánh giá</a>
-                            <form method="post" asp-action="Delete" asp-route-id="@item.Id"
-                                  onsubmit="return confirm('Bạn có chắc muốn xóa món này?')">
-                                <button class="btn-secondary">Xóa</button>
-                            </form>
-                        </div>
+                        <details class="admin-menu-actions" open>
+                            <summary>Thao tác</summary>
+                            <div class="admin-actions">
+                                <a asp-action="Edit" asp-route-id="@item.Id" class="btn-secondary">Sửa</a>
+                                <a asp-controller="Menu" asp-action="Details" asp-route-id="@item.Id" asp-fragment="reviews" class="btn-secondary">Đánh giá</a>
+                                <form method="post" asp-action="Delete" asp-route-id="@item.Id"
+                                      onsubmit="return confirm('Bạn có chắc muốn xóa món này?')">
+                                    <button class="btn-secondary">Xóa</button>
+                                </form>
+                            </div>
+                        </details>
                     </td>
                 </tr>
             }
@@ -119,12 +122,26 @@
     {
         <p role="status">@stockMessage</p>
     }
+    <label for="stock-filter">Lọc theo tồn kho</label>
+    <select id="stock-filter">
+        <option value="all">Tất cả món</option>
+        <option value="low">Sắp hết (1–5 phần)</option>
+        <option value="out">Hết hàng</option>
+    </select>
+    <p data-stock-empty role="status" hidden>Không có món phù hợp.</p>
     @foreach (var item in (List<MenuItem>)ViewData["StockItems"]!)
     {
-        <form method="post" asp-action="SetStock" class="stock-row">
+        var stockStatus = item.IsSoldOut ? "out" : item.StockQuantity is >= 1 and <= 5 ? "low" : "available";
+        <form method="post" asp-action="SetStock" class="stock-row" data-stock-status="@stockStatus">
             <input type="hidden" name="id" value="@item.Id" />
             <input type="hidden" name="originalQuantity" value="@item.StockQuantity" />
-            <label for="stock-@item.Id">@item.Name</label>
+            <label for="stock-@item.Id">
+                @item.Name
+                @if (item.StockQuantity == null && !item.IsSoldOut)
+                {
+                    <small class="stock-note">Đang bán · chưa đặt số lượng</small>
+                }
+            </label>
             <input id="stock-@item.Id" type="number" name="quantity" min="0" step="1" required
                    value="@item.StockQuantity" placeholder="Chưa nhập" />
             <button class="btn-secondary" type="submit" aria-label="Lưu tồn kho @item.Name">Lưu</button>

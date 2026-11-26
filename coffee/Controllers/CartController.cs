@@ -21,7 +21,12 @@ public class CartController : Controller
     }
 
     // GET /Cart
-    public IActionResult Index() => View(_cart.GetItems());
+    public IActionResult Index()
+    {
+        var items = _cart.GetItems();
+        ViewData["CartStock"] = GetCartStock(items);
+        return View(items);
+    }
 
     // POST /Cart/Add
     [HttpPost]
@@ -79,7 +84,33 @@ public class CartController : Controller
     [HttpPost]
     public IActionResult Update(string key, int delta)
     {
+        if (delta > 0)
+        {
+            var items = _cart.GetItems();
+            var line = items.Find(item => item.Key == key);
+            if (line != null && GetCartStock(items)[line.ItemId] is int stock &&
+                items.Where(item => item.ItemId == line.ItemId).Sum(item => item.Quantity) >= stock)
+            {
+                TempData["Error"] = $"Món {line.Name} không còn đủ hàng để tăng số lượng.";
+                return RedirectToAction(nameof(Index));
+            }
+        }
         _cart.ChangeQuantity(key, Math.Clamp(delta, -1, 1));
+        return RedirectToAction(nameof(Index));
+    }
+
+    [HttpPost]
+    public IActionResult ReduceToStock(string key)
+    {
+        var items = _cart.GetItems();
+        var line = items.Find(item => item.Key == key);
+        if (line != null && GetCartStock(items)[line.ItemId] is int stock)
+        {
+            var requested = items.Where(item => item.ItemId == line.ItemId).Sum(item => item.Quantity);
+            if (requested > stock)
+                _cart.ChangeQuantity(key, -Math.Min(line.Quantity, requested - stock));
+        }
+
         return RedirectToAction(nameof(Index));
     }
 
@@ -211,8 +242,18 @@ public class CartController : Controller
         return true;
     }
 
-    private static CheckoutViewModel BuildCheckoutModel(CheckoutViewModel model, List<CartItem> items)
+    private Dictionary<string, int?> GetCartStock(List<CartItem> items)
     {
+        var ids = items.Select(item => item.ItemId).Distinct().ToList();
+        var stock = _database.MenuItems.Where(item => ids.Contains(item.Id))
+            .Select(item => new { item.Id, Available = item.IsSoldOut ? 0 : item.StockQuantity })
+            .ToDictionary(item => item.Id, item => item.Available);
+        return ids.ToDictionary(id => id, id => stock.TryGetValue(id, out var available) ? available : 0);
+    }
+
+    private CheckoutViewModel BuildCheckoutModel(CheckoutViewModel model, List<CartItem> items)
+    {
+        ViewData["CartStock"] = GetCartStock(items);
         model.Items = items;
         model.Total = items.Sum(i => i.LineTotal);
         return model;

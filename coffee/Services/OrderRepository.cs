@@ -45,6 +45,10 @@ public class OrderRepository(CafeDbContext database)
                     .SetProperty(item => item.IsSoldOut, item => item.StockQuantity == quantity));
             if (updated == 0)
                 return group.First().Name;
+
+            var stockDeducted = database.MenuItems.Any(item => item.Id == group.Key && item.StockQuantity != null);
+            foreach (var line in group)
+                line.StockDeducted = stockDeducted;
         }
 
         database.Orders.Add(order);
@@ -53,27 +57,44 @@ public class OrderRepository(CafeDbContext database)
         return null;
     }
 
-    public bool Cancel(string orderId, Guid customerId)
-    {
-        var now = DateTime.Now;
-        return database.Orders
-            .Where(order => order.Id == orderId &&
-                order.CustomerAccountId == customerId &&
-                order.Status == OrderStatus.Pending)
-            .ExecuteUpdate(update => update
-                .SetProperty(order => order.Status, OrderStatus.Cancelled)
-                .SetProperty(order => order.UpdatedAt, now)) == 1;
-    }
-    public bool SetStatus(string orderId, OrderStatus status)
-    {
-        if (status is not (OrderStatus.Cancelled or OrderStatus.Delivered))
-            return false;
+    public bool Cancel(string orderId, Guid customerId) =>
+        UpdatePendingOrder(orderId, OrderStatus.Cancelled, customerId);
 
+    public bool SetStatus(string orderId, OrderStatus status) =>
+        status is OrderStatus.Cancelled or OrderStatus.Delivered && UpdatePendingOrder(orderId, status);
+
+    private bool UpdatePendingOrder(string orderId, OrderStatus status, Guid? customerId = null)
+    {
+        using var transaction = database.Database.BeginTransaction();
         var now = DateTime.Now;
-        return database.Orders
-            .Where(order => order.Id == orderId && order.Status == OrderStatus.Pending)
+        var updated = database.Orders
+            .Where(order => order.Id == orderId && order.Status == OrderStatus.Pending &&
+                (!customerId.HasValue || order.CustomerAccountId == customerId))
             .ExecuteUpdate(update => update
                 .SetProperty(order => order.Status, status)
-                .SetProperty(order => order.UpdatedAt, now)) == 1;
+                .SetProperty(order => order.UpdatedAt, now));
+        if (updated == 0)
+            return false;
+
+        if (status == OrderStatus.Cancelled)
+        {
+            var lines = database.Orders.Where(order => order.Id == orderId)
+                .SelectMany(order => order.Items)
+                .Where(line => line.StockDeducted)
+                .Select(line => new { line.ItemId, line.Quantity })
+                .ToList();
+
+            foreach (var group in lines.GroupBy(line => line.ItemId).OrderBy(group => group.Key))
+            {
+                var quantity = group.Sum(line => line.Quantity);
+                database.MenuItems.Where(item => item.Id == group.Key && item.StockQuantity != null)
+                    .ExecuteUpdate(update => update
+                        .SetProperty(item => item.StockQuantity, item => item.StockQuantity + quantity)
+                        .SetProperty(item => item.IsSoldOut, false));
+            }
+        }
+
+        transaction.Commit();
+        return true;
     }
 }

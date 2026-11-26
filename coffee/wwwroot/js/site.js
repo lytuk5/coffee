@@ -309,3 +309,12 @@ document.addEventListener("change", function (event) {
     event.target.form.querySelector("[data-order-size-price]").textContent =
         option.dataset.price || "Vui lòng chọn size";
 });
+
+document.addEventListener("change", event => {
+    if (!event.target.matches("[data-category-select]")) return;
+    const field = event.target.form.querySelector("[data-new-category]");
+    const input = field.querySelector("input");
+    field.hidden = event.target.value !== "+new";
+    input.disabled = field.hidden;
+    if (!field.hidden) input.focus();
+});

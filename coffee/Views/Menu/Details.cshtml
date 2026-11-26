@@ -2,11 +2,11 @@
 @{
     var item = Model.Item;
     ViewData["Title"] = item.Name;
-    var category = CafeDuaHau.Data.MenuData.Categories.FirstOrDefault(category => category.Id == item.CategoryId);
+    var categoryName = ViewData["CategoryName"] as string;
 }
 
 <section class="view">
-    <a class="btn-secondary" asp-action="Index" asp-route-category="@category?.Id">Về thực đơn</a>
+    <a class="btn-secondary" asp-action="Index" asp-route-category="@item.CategoryId">Về thực đơn</a>
     <div class="menu-detail">
         <div data-menu-gallery>
             <div class="menu-detail-image">
@@ -28,9 +28,9 @@
             }
         </div>
         <div class="menu-detail-info">
-            @if (category is not null)
+            @if (categoryName is not null)
             {
-                <p>@category.Name</p>
+                <p>@categoryName</p>
             }
             <h2>@item.Name</h2>
             <p>@item.Description</p>

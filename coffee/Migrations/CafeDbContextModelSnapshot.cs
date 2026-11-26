@@ -44,6 +44,21 @@ namespace do_an_1.Migrations
                     b.ToTable("AdminAccounts");
                 });
 
+            modelBuilder.Entity("CafeDuaHau.Models.Category", b =>
+                {
+                    b.Property<string>("Id").HasMaxLength(32).HasColumnType("nvarchar(32)");
+                    b.Property<string>("Name").IsRequired().HasMaxLength(80).HasColumnType("nvarchar(80)")
+                        .UseCollation("Latin1_General_100_CI_AS");
+                    b.HasKey("Id");
+                    b.HasIndex("Name").IsUnique();
+                    b.ToTable("Categories");
+                    b.HasData(
+                        new { Id = "ca-phe", Name = "Cà phê" },
+                        new { Id = "tra", Name = "Trà & Trà sữa" },
+                        new { Id = "sinh-to", Name = "Sinh tố & Nước ép" },
+                        new { Id = "banh", Name = "Bánh ngọt" });
+                });
+
             modelBuilder.Entity("CafeDuaHau.Models.ChatMessage", b =>
                 {
                     b.Property<long>("Id")
@@ -592,6 +607,9 @@ namespace do_an_1.Migrations
 
                             b1.Property<string>("Size")
                                 .HasColumnType("nvarchar(max)");
+
+                            b1.Property<bool>("StockDeducted")
+                                .HasColumnType("bit");
 
                             b1.HasKey("OrderId", "Id");
 

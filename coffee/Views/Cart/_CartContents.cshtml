@@ -2,6 +2,8 @@
 @{
     var total = Model.Sum(i => i.LineTotal);
     var count = Model.Sum(i => i.Quantity);
+    var stock = (Dictionary<string, int?>)ViewData["CartStock"]!;
+    var quantities = Model.GroupBy(item => item.ItemId).ToDictionary(group => group.Key, group => group.Sum(item => item.Quantity));
 }
 
 <section class="view view-cart">
@@ -22,6 +24,10 @@
             <div class="cart-items-list">
                 @foreach (var item in Model)
                 {
+                    var available = stock[item.ItemId];
+                    var requested = quantities[item.ItemId];
+                    var excess = available.HasValue ? Math.Max(0, requested - available.Value) : 0;
+                    var reduction = Math.Min(excess, item.Quantity);
                     <div class="cart-item-row">
                         <img class="cart-item-img" src="@item.ImageUrl" alt="@item.Name"
                              onerror="this.onerror=null;this.src='/images/menu/placeholder.svg'" />
@@ -30,6 +36,19 @@
                             @if (!string.IsNullOrEmpty(item.Note))
                             {
                                 <p class="cart-item-note">Ghi chú: @item.Note</p>
+                            }
+                            @if (available.HasValue)
+                            {
+                                <p class="cart-item-note @(excess > 0 ? "coffee-stock-out" : "")">
+                                    @(available == 0 ? "Hết hàng" : $"Còn {available} phần")
+                                </p>
+                            }
+                            @if (available > 0 && reduction > 0)
+                            {
+                                <form method="post" asp-action="ReduceToStock">
+                                    <input type="hidden" name="key" value="@item.Key" />
+                                    <button type="submit" class="btn-secondary">@(reduction == item.Quantity ? "Bỏ dòng này" : $"Giảm còn {item.Quantity - reduction}")</button>
+                                </form>
                             }
                             <span class="cart-item-price">@Money.Format(item.LineTotal)</span>
                         </div>
@@ -44,7 +63,7 @@
                             <form method="post" asp-action="Update" class="inline-form">
                                 <input type="hidden" name="key" value="@item.Key" />
                                 <input type="hidden" name="delta" value="1" />
-                                <button type="submit" class="qty-btn">+</button>
+                                <button type="submit" class="qty-btn" disabled="@(item.Quantity >= 99 || available <= requested)">+</button>
                             </form>
                         </div>
 

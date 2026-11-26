@@ -7,6 +7,7 @@ public class CafeDbContext(DbContextOptions<CafeDbContext> options) : DbContext(
 {
     public DbSet<Order> Orders => Set<Order>();
 
+    public DbSet<Category> Categories => Set<Category>();
     public DbSet<MenuItem> MenuItems => Set<MenuItem>();
     public DbSet<AdminAccount> AdminAccounts => Set<AdminAccount>();
 
@@ -30,6 +31,14 @@ public class CafeDbContext(DbContextOptions<CafeDbContext> options) : DbContext(
             account.Property(customer => customer.ExternalProvider).HasMaxLength(16);
             account.Property(customer => customer.ExternalSubject).HasMaxLength(255);
             account.HasIndex(customer => new { customer.ExternalProvider, customer.ExternalSubject }).IsUnique();
+        });
+
+        modelBuilder.Entity<Category>(category =>
+        {
+            category.Property(item => item.Id).HasMaxLength(32);
+            category.Property(item => item.Name).HasMaxLength(80).UseCollation("Latin1_General_100_CI_AS");
+            category.HasIndex(item => item.Name).IsUnique();
+            category.HasData(MenuData.Categories);
         });
 
         modelBuilder.Entity<MenuItem>(menu =>
