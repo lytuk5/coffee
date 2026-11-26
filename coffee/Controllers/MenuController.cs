@@ -24,10 +24,18 @@ public class MenuController(CafeDbContext database) : Controller
         if (keyword.Length > 0)
             items = items.Where(i => i.Name.Contains(keyword, StringComparison.OrdinalIgnoreCase));
 
+        var visibleItems = items.ToList();
+        var ids = visibleItems.Select(item => item.Id).ToList();
+        var ratings = database.MenuReviews.Where(review => ids.Contains(review.MenuItemId))
+            .GroupBy(review => review.MenuItemId)
+            .Select(group => new { Id = group.Key, Average = group.Average(review => (double)review.Rating), Count = group.Count() })
+            .ToDictionary(group => group.Id, group => (group.Average, group.Count));
+
         var model = new MenuIndexViewModel
         {
             Categories = database.Categories.AsNoTracking().OrderBy(category => category.Name).ToList(),
-            Items = items.ToList(),
+            Items = visibleItems,
+            Ratings = ratings,
             ActiveCategory = active,
             Keyword = keyword
         };
@@ -35,6 +43,7 @@ public class MenuController(CafeDbContext database) : Controller
         return View(model);
     }
 
+    [AllowAnonymous]
     public IActionResult Details(string id)
     {
         var item = database.MenuItems.AsNoTracking().SingleOrDefault(item => item.Id == id);
@@ -57,9 +66,11 @@ public class MenuController(CafeDbContext database) : Controller
              join customer in database.CustomerAccounts on review.CustomerAccountId equals customer.Id
              where review.MenuItemId == id
              orderby review.CreatedAt descending
-             select new MenuReviewEntry(customer.UserName, review.Rating, review.Comment, review.CreatedAt))
+             select new MenuReviewEntry(review.CustomerAccountId, customer.UserName, review.Rating, review.Comment, review.CreatedAt))
             .ToList();
-        var canReview = User.IsInRole("Customer") && CanReview(id, CustomerIdentity.GetId(User));
+        Guid? customerId = User.IsInRole("Customer") ? CustomerIdentity.GetId(User) : null;
+        ViewData["ReviewCustomerId"] = customerId;
+        var canReview = customerId.HasValue && CanReview(id, customerId.Value);
         return View(new MenuDetailsViewModel(item, photos, reviews, canReview));
     }
 
@@ -108,10 +119,63 @@ public class MenuController(CafeDbContext database) : Controller
             }
         }
 
-        return fromOrders
+        return AfterReview(id, fromOrders);
+    }
+
+    [HttpPost]
+    [Authorize(Roles = "Customer")]
+    public IActionResult EditReview(string id, MenuReviewForm form, bool fromOrders = false)
+    {
+        var customerId = CustomerIdentity.GetId(User);
+        if (!ModelState.IsValid)
+        {
+            TempData["Error"] = ModelState.Values.SelectMany(value => value.Errors).First().ErrorMessage;
+            return AfterReview(id, fromOrders);
+        }
+
+        var updated = database.MenuReviews
+            .Where(review => review.MenuItemId == id && review.CustomerAccountId == customerId)
+            .ExecuteUpdate(update => update
+                .SetProperty(review => review.Rating, form.Rating)
+                .SetProperty(review => review.Comment, form.Comment.Trim()));
+        if (updated == 0)
+            return NotFound();
+
+        TempData["Success"] = "Đã cập nhật đánh giá.";
+        return AfterReview(id, fromOrders);
+    }
+
+    [HttpPost]
+    [Authorize(Roles = "Customer,Admin")]
+    public IActionResult DeleteReview(string id, Guid? authorId, bool fromOrders = false)
+    {
+        if (User.IsInRole("Admin"))
+        {
+            if (!authorId.HasValue)
+                return BadRequest();
+        }
+        else
+        {
+            var customerId = CustomerIdentity.GetId(User);
+            if (authorId.HasValue && authorId.Value != customerId)
+                return Forbid();
+            authorId = customerId;
+        }
+
+        var deleted = database.MenuReviews
+            .Where(review => review.MenuItemId == id && review.CustomerAccountId == authorId)
+            .ExecuteDelete();
+        if (deleted == 0)
+            return NotFound();
+
+        TempData["Success"] = "Đã xóa đánh giá.";
+        return AfterReview(id, fromOrders);
+    }
+
+    private IActionResult AfterReview(string id, bool fromOrders) =>
+        fromOrders
             ? RedirectToAction("Index", "Orders")
             : RedirectToAction(nameof(Details), controllerName: null, routeValues: new { id }, fragment: "reviews");
-    }
 
     private bool CanReview(string itemId, Guid customerId) =>
         database.Orders.Any(order => order.CustomerAccountId == customerId &&

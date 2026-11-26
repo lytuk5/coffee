@@ -89,17 +89,14 @@
 
 <section class="view menu-reviews" id="reviews">
     <h2>Đánh giá món</h2>
+    @if (Model.Reviews.Count > 0)
+    {
+        <partial name="_RatingSummary" model="@((Model.Reviews.Average(review => review.Rating), Model.Reviews.Count))" />
+    }
     @if (Model.CanReview)
     {
         <form method="post" asp-action="Review" asp-route-id="@item.Id" class="admin-form menu-detail-form">
-            <label for="rating">Số sao</label>
-            <select id="rating" name="Rating" required>
-                <option value="">Chọn số sao</option>
-                @for (var rating = 5; rating >= 1; rating--)
-                {
-                    <option value="@rating">@rating sao</option>
-                }
-            </select>
+            <partial name="_StarRating" model="0" />
             <label for="comment">Nhận xét</label>
             <textarea id="comment" name="Comment" maxlength="1000" required></textarea>
             <button class="btn-primary">Gửi đánh giá</button>
@@ -112,8 +109,35 @@
     @foreach (var review in Model.Reviews)
     {
         <article class="menu-review">
-            <p><strong>@review.UserName</strong> · @review.Rating/5 sao · @review.CreatedAt.ToString("dd/MM/yyyy")</p>
+            <p class="menu-review-meta">
+                <strong>@review.UserName</strong>
+                <span class="menu-review-stars" role="img" aria-label="@review.Rating trên 5 sao">
+                    <span class="star-selected" aria-hidden="true">@(new string('★', review.Rating))</span><span class="star-unselected" aria-hidden="true">@(new string('★', 5 - review.Rating))</span>
+                </span>
+                <time datetime="@review.CreatedAt.ToString("yyyy-MM-dd")">@review.CreatedAt.ToString("dd/MM/yyyy")</time>
+            </p>
             <p class="menu-review-comment">@review.Comment</p>
+            @{
+                var isOwner = (Guid?)ViewData["ReviewCustomerId"] == review.CustomerAccountId;
+            }
+            @if (isOwner)
+            {
+                <details>
+                    <summary class="btn-secondary">Sửa đánh giá</summary>
+                    <form method="post" asp-action="EditReview" asp-route-id="@item.Id" class="admin-form menu-detail-form">
+                        <partial name="_StarRating" model="review.Rating" />
+                        <label for="edit-review-comment">Nhận xét</label>
+                        <textarea id="edit-review-comment" name="Comment" maxlength="1000" required>@review.Comment</textarea>
+                        <button class="btn-primary">Lưu đánh giá</button>
+                    </form>
+                </details>
+            }
+            @if (isOwner || User.IsInRole("Admin"))
+            {
+                <form method="post" asp-action="DeleteReview" asp-route-id="@item.Id" asp-route-authorId="@review.CustomerAccountId">
+                    <button type="submit" class="btn-secondary" data-confirm="Bạn có chắc muốn xóa đánh giá này?">Xóa đánh giá</button>
+                </form>
+            }
         </article>
     }
 </section>

@@ -63,6 +63,12 @@
                 </a>
                 <div class="menu-item-info">
                     <h3 class="menu-item-name"><a class="menu-detail-link" asp-action="Details" asp-route-id="@item.Id">@item.Name</a></h3>
+                    @if (Model.Ratings.TryGetValue(item.Id, out var rating))
+                    {
+                        <a class="menu-rating-link" asp-action="Details" asp-route-id="@item.Id" asp-fragment="reviews">
+                            <partial name="_RatingSummary" model="rating" />
+                        </a>
+                    }
                     <p class="menu-item-desc"><a asp-action="Details" asp-route-id="@item.Id">@item.Description</a></p>
                     <div class="menu-item-footer">
                         <partial name="_Price" model="@((item.BasePrice, item.SalePrice(item.BasePrice), ""))" />

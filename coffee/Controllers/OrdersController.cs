@@ -17,9 +17,10 @@ public class OrdersController(OrderRepository orders, CafeDbContext database, Ca
         var deliveredIds = history.Where(order => order.Status == OrderStatus.Delivered)
             .SelectMany(order => order.Items).Select(item => item.ItemId).Distinct().ToList();
         ViewData["ReviewableItems"] = database.MenuItems.AsNoTracking()
-            .Where(item => deliveredIds.Contains(item.Id) &&
-                !database.MenuReviews.Any(review => review.MenuItemId == item.Id && review.CustomerAccountId == customerId))
-            .Select(item => item.Id).ToHashSet();
+            .Where(item => deliveredIds.Contains(item.Id)).Select(item => item.Id).ToHashSet();
+        ViewData["OwnReviews"] = database.MenuReviews.AsNoTracking()
+            .Where(review => review.CustomerAccountId == customerId && deliveredIds.Contains(review.MenuItemId))
+            .ToDictionary(review => review.MenuItemId);
         return View(history);
     }
 

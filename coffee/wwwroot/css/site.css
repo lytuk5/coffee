@@ -1013,8 +1013,22 @@ body:has(.menu-edit-dialog[open]) { overflow: hidden; }
 .order-review-form legend { font-weight: 700; }
 .order-review-form textarea { padding: 8px; font: inherit; resize: vertical; }
 .order-review-form button { justify-self: start; }
-.order-rating { display: flex; flex-wrap: wrap; gap: 10px; }
-.order-rating label { cursor: pointer; }
-.order-rating label span { font-size: 1.25rem; color: var(--color-text); }
-.order-rating label:has(input:checked) span,
-.order-rating label:has(~ label input:checked) span { color: #9a5805; }
+.menu-rating-link { display: inline-block; margin-block: 3px; }
+.menu-rating-summary { display: inline-flex; align-items: center; gap: 4px; font-size: .875rem; }
+.menu-rating-stars {
+    background: linear-gradient(to right, #f4a900 var(--rating-fill), #82766a var(--rating-fill));
+    background-clip: text;
+    color: transparent;
+    font-size: 1rem;
+}
+.star-rating { display: flex; gap: 4px; }
+.star-rating label { position: relative; cursor: pointer; }
+.star-rating input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.menu-review-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.menu-review-stars { white-space: nowrap; }
+.star-rating label span { display: block; padding-inline: 3px; font-size: 1.55rem; }
+.star-rating label span, .star-unselected { color: #767676; }
+.star-rating input:checked + span,
+.star-rating label:has(~ label input:checked) span,
+.star-selected { color: #f4a900; }
+.star-rating input:focus-visible + span { outline: 2px solid currentColor; outline-offset: 2px; }

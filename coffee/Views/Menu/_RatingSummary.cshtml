@@ -1,0 +1,11 @@
+@using System.Globalization
+@model (double Average, int Count)
+@{
+    var score = Model.Average.ToString("0.0", CultureInfo.InvariantCulture);
+    var fill = (Model.Average * 20).ToString("0.##", CultureInfo.InvariantCulture) + "%";
+}
+<span class="menu-rating-summary" aria-label="@score trên 5 sao, @Model.Count lượt đánh giá">
+    <span aria-hidden="true">@score</span>
+    <span class="menu-rating-stars" aria-hidden="true" style="--rating-fill: @fill">★★★★★</span>
+    <span aria-hidden="true">(@Model.Count)</span>
+</span>

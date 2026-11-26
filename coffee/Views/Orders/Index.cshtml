@@ -2,6 +2,7 @@
 @{
     ViewData["Title"] = "Đơn của tôi";
     var reviewableItems = (HashSet<string>)ViewData["ReviewableItems"]!;
+    var ownReviews = (Dictionary<string, MenuReview>)ViewData["OwnReviews"]!;
 }
 
 <section class="view view-tracking">
@@ -45,24 +46,23 @@
                                     @foreach (var item in reviewItems)
                                     {
                                         var ratingId = $"review-{order.Id}-{item.ItemId}";
-                                        <form method="post" asp-controller="Menu" asp-action="Review" asp-route-id="@item.ItemId"
+                                        ownReviews.TryGetValue(item.ItemId, out var review);
+                                        <form method="post" asp-controller="Menu" asp-action="@(review == null ? "Review" : "EditReview")" asp-route-id="@item.ItemId"
                                               asp-route-fromOrders="true" class="order-review-form">
                                             <fieldset>
                                                 <legend>@item.Name</legend>
-                                                <div class="order-rating">
-                                                    @for (var star = 1; star <= 5; star++)
-                                                    {
-                                                        <label>
-                                                            <input type="radio" name="Rating" value="@star" aria-label="@star sao" required />
-                                                            <span aria-hidden="true">★</span>
-                                                        </label>
-                                                    }
-                                                </div>
+                                                <partial name="_StarRating" model="@(review?.Rating ?? 0)" />
                                                 <label for="@ratingId">Nhận xét</label>
-                                                <textarea id="@ratingId" name="Comment" rows="3" maxlength="1000" required></textarea>
-                                                <button type="submit" class="btn-primary">Gửi đánh giá</button>
+                                                <textarea id="@ratingId" name="Comment" rows="3" maxlength="1000" required>@review?.Comment</textarea>
+                                                <button type="submit" class="btn-primary">@(review == null ? "Gửi đánh giá" : "Lưu chỉnh sửa")</button>
                                             </fieldset>
                                         </form>
+                                        @if (review != null)
+                                        {
+                                            <form method="post" asp-controller="Menu" asp-action="DeleteReview" asp-route-id="@item.ItemId" asp-route-fromOrders="true">
+                                                <button type="submit" class="btn-secondary" data-confirm="Bạn có chắc muốn xóa đánh giá này?">Xóa đánh giá</button>
+                                            </form>
+                                        }
                                     }
                                 </details>
                             }

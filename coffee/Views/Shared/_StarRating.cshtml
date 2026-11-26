@@ -1,0 +1,10 @@
+@model int
+<div class="star-rating" role="group" aria-label="Chấm điểm">
+    @for (var star = 1; star <= 5; star++)
+    {
+        <label>
+            <input type="radio" name="Rating" value="@star" checked="@(star == Model)" aria-label="@star sao" required />
+            <span aria-hidden="true">★</span>
+        </label>
+    }
+</div>
