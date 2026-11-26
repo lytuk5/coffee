@@ -154,7 +154,12 @@ public class CartController : Controller
             UpdatedAt = now
         };
 
-        _orders.Add(order);
+        var unavailableItem = _orders.Add(order);
+        if (unavailableItem != null)
+        {
+            TempData["Error"] = $"Món {unavailableItem} đã hết hàng hoặc không đủ số lượng. Vui lòng kiểm tra lại giỏ hàng.";
+            return RedirectToAction(nameof(Index));
+        }
         _cart.Clear();
 
         TempData["Success"] = "Đặt hàng thành công!";
@@ -168,6 +173,16 @@ public class CartController : Controller
         var menu = _database.MenuItems.AsNoTracking()
             .Where(item => ids.Contains(item.Id))
             .ToDictionary(item => item.Id);
+
+        foreach (var group in items.GroupBy(item => item.ItemId))
+        {
+            if (menu.TryGetValue(group.Key, out var item) && !item.IsSoldOut &&
+                item.StockQuantity is int stock && group.Sum(line => line.Quantity) > stock)
+            {
+                TempData["Error"] = $"Món {item.Name} chỉ còn {stock} phần. Vui lòng giảm số lượng trong giỏ hàng.";
+                return false;
+            }
+        }
 
         foreach (var item in items)
         {

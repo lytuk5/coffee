@@ -31,10 +31,26 @@ public class OrderRepository(CafeDbContext database)
     }
 
 
-    public void Add(Order order)
+    public string? Add(Order order)
     {
+        using var transaction = database.Database.BeginTransaction();
+        foreach (var group in order.Items.GroupBy(item => item.ItemId).OrderBy(group => group.Key))
+        {
+            var quantity = group.Sum(item => item.Quantity);
+            var updated = database.MenuItems
+                .Where(item => item.Id == group.Key && !item.IsSoldOut &&
+                    (item.StockQuantity == null || item.StockQuantity >= quantity))
+                .ExecuteUpdate(update => update
+                    .SetProperty(item => item.StockQuantity, item => item.StockQuantity - quantity)
+                    .SetProperty(item => item.IsSoldOut, item => item.StockQuantity == quantity));
+            if (updated == 0)
+                return group.First().Name;
+        }
+
         database.Orders.Add(order);
         database.SaveChanges();
+        transaction.Commit();
+        return null;
     }
 
     public bool Cancel(string orderId, Guid customerId)

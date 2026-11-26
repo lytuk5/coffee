@@ -37,7 +37,6 @@
         <label asp-for="Photos">Thêm ảnh món</label>
         <input asp-for="Photos" type="file" accept="image/jpeg,image/png,image/webp" multiple />
         <p>JPG, PNG hoặc WebP, tối đa 5 MB mỗi ảnh. Ảnh đầu tiên được dùng làm ảnh bìa.</p>
-        <label><input asp-for="IsSoldOut" /> Hết hàng</label>
         <div class="admin-actions">
             <button class="btn-primary">Lưu món</button>
             @if (ViewData["MenuDialog"] is true)

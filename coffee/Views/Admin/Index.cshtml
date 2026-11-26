@@ -10,7 +10,11 @@
         <a asp-controller="Account" asp-action="PasswordRequests" class="btn-secondary">Yêu cầu đặt lại mật khẩu</a>
     </div>
     <div class="coffee-admin-toolbar">
-        <a asp-action="Edit" class="btn-primary" data-add-menu>+ Thêm món</a>
+        <div class="admin-actions">
+            <a asp-action="Edit" class="btn-primary" data-add-menu>+ Thêm món</a>
+            <button type="button" class="btn-secondary" aria-haspopup="dialog"
+                    onclick="document.getElementById('stock-dialog').showModal()">Quản lý tồn kho</button>
+        </div>
         <form method="get" asp-action="Index" class="coffee-admin-filters">
             <input name="q" value="@ViewData["Keyword"]" placeholder="Tìm kiếm món ăn..." aria-label="Tìm món" />
             <select name="category" aria-label="Danh mục">
@@ -39,15 +43,7 @@
                     <td>@item.Name</td>
                     <td>@(item.HasSizes ? string.Join(" / ", item.Sizes.OrderByDescending(size => size.Label).Select(size => $"{size.Label} {Money.Format(size.Price)}")) : Money.Format(item.Price))</td>
                     <td>
-                        <div class="admin-actions">
-                            <span class="@(item.IsSoldOut ? "coffee-stock-out" : "coffee-stock-in")">@(item.IsSoldOut ? "Hết hàng" : "Còn hàng")</span>
-                            <form method="post" asp-action="SetAvailability" asp-route-id="@item.Id">
-                                <input type="hidden" name="isSoldOut" value="@((!item.IsSoldOut).ToString().ToLowerInvariant())" />
-                                <button class="availability-switch" type="submit" role="switch"
-                                        aria-checked="@(item.IsSoldOut ? "false" : "true")"
-                                        aria-label="@item.Name còn hàng"></button>
-                            </form>
-                        </div>
+                        <span class="@(item.IsSoldOut ? "coffee-stock-out" : "coffee-stock-in")">@(item.IsSoldOut ? "Hết hàng" : "Còn hàng")</span>
                     </td>
                     <td>
                         <button class="availability-switch hot-switch" type="button" role="switch" aria-haspopup="dialog"
@@ -82,17 +78,59 @@
         @if (pageCount > 1)
         {
             <nav aria-label="Phân trang thực đơn">
+                @if (currentPage > 1)
+                {
+                    <a asp-action="Index" asp-route-page="@(currentPage - 1)"
+                       asp-route-q="@ViewData["Keyword"]" asp-route-category="@ViewData["Category"]">‹ Trang trước</a>
+                }
+                else
+                {
+                    <span aria-disabled="true">‹ Trang trước</span>
+                }
                 @for (var number = 1; number <= pageCount; number++)
                 {
                     <a asp-action="Index" asp-route-page="@number" asp-route-q="@ViewData["Keyword"]"
                        asp-route-category="@ViewData["Category"]"
                        aria-current="@(number == currentPage ? "page" : null)">@number</a>
                 }
+                @if (currentPage < pageCount)
+                {
+                    <a asp-action="Index" asp-route-page="@(currentPage + 1)"
+                       asp-route-q="@ViewData["Keyword"]" asp-route-category="@ViewData["Category"]">Trang sau ›</a>
+                }
+                else
+                {
+                    <span aria-disabled="true">Trang sau ›</span>
+                }
             </nav>
         }
     </div>
 </section>
 
+
+<dialog id="stock-dialog" class="login-dialog" aria-labelledby="stock-title">
+    <div class="login-dialog-heading">
+        <h2 id="stock-title">Quản lý tồn kho</h2>
+        <form method="dialog">
+            <button class="login-dialog-close" aria-label="Đóng">×</button>
+        </form>
+    </div>
+    @if (TempData["StockMessage"] is string stockMessage)
+    {
+        <p role="status">@stockMessage</p>
+    }
+    @foreach (var item in (List<MenuItem>)ViewData["StockItems"]!)
+    {
+        <form method="post" asp-action="SetStock" class="stock-row">
+            <input type="hidden" name="id" value="@item.Id" />
+            <input type="hidden" name="originalQuantity" value="@item.StockQuantity" />
+            <label for="stock-@item.Id">@item.Name</label>
+            <input id="stock-@item.Id" type="number" name="quantity" min="0" step="1" required
+                   value="@item.StockQuantity" placeholder="Chưa nhập" />
+            <button class="btn-secondary" type="submit" aria-label="Lưu tồn kho @item.Name">Lưu</button>
+        </form>
+    }
+</dialog>
 
 <dialog id="promotion-dialog" class="login-dialog" aria-labelledby="promotion-title">
     <div class="login-dialog-heading">
@@ -120,5 +158,11 @@
     <div data-menu-dialog-content></div>
 </dialog>
 @section Scripts {
+    <script>
+        if (window.location.hash === '#stock-dialog') {
+            history.replaceState(null, '', window.location.pathname + window.location.search);
+            document.getElementById('stock-dialog').showModal();
+        }
+    </script>
     <script src="~/js/admin-menu.js" asp-append-version="true"></script>
 }

@@ -21,6 +21,7 @@ public class MenuItem
 
     public string ImageUrl { get; set; } = "";
     public bool IsSoldOut { get; set; }
+    public int? StockQuantity { get; set; }
     public bool IsHot { get; set; }
     public int? DiscountPercent { get; set; }
 

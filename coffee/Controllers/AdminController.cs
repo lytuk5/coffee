@@ -34,6 +34,8 @@ public class AdminController(CafeDbContext database) : Controller
         ViewData["Total"] = total;
         ViewData["PageCount"] = pageCount;
 
+        ViewData["StockItems"] = database.MenuItems.AsNoTracking().OrderBy(item => item.Name).ToList();
+
         return View(items.OrderBy(item => item.CategoryId).ThenBy(item => item.Name).ThenBy(item => item.Id)
             .Skip((page - 1) * pageSize).Take(pageSize).ToList());
     }
@@ -58,8 +60,7 @@ public class AdminController(CafeDbContext database) : Controller
             Price = item.HasSizes ? null : item.Price,
             MediumPrice = item.Sizes.SingleOrDefault(size => size.Label == "M")?.Price,
             LargePrice = item.Sizes.SingleOrDefault(size => size.Label == "L")?.Price,
-            ExtraLargePrice = item.Sizes.SingleOrDefault(size => size.Label == "XL")?.Price,
-            IsSoldOut = item.IsSoldOut
+            ExtraLargePrice = item.Sizes.SingleOrDefault(size => size.Label == "XL")?.Price
         });
     }
 
@@ -79,7 +80,7 @@ public class AdminController(CafeDbContext database) : Controller
         ViewData["ItemId"] = id;
         await using var transaction = await database.Database.BeginTransactionAsync(cancellationToken);
         var item = id is null
-            ? new MenuItem { Id = Guid.NewGuid().ToString("N"), ImageUrl = MenuData.PlaceholderImage }
+            ? new MenuItem { Id = Guid.NewGuid().ToString("N"), ImageUrl = MenuData.PlaceholderImage, StockQuantity = 0, IsSoldOut = true }
             : FindMenuItemForPhotoUpdate(id);
         if (item is null)
             return NotFound();
@@ -132,7 +133,6 @@ public class AdminController(CafeDbContext database) : Controller
         item.Description = form.Description?.Trim() ?? "";
         item.CategoryId = form.CategoryId;
         item.Price = form.Price ?? 0;
-        item.IsSoldOut = form.IsSoldOut;
         SetSize(item, "M", form.MediumPrice);
         SetSize(item, "L", form.LargePrice);
         SetSize(item, "XL", form.ExtraLargePrice);
@@ -158,18 +158,26 @@ public class AdminController(CafeDbContext database) : Controller
     }
 
     [HttpPost]
-    public IActionResult SetAvailability(string id, bool? isSoldOut)
+    public IActionResult SetStock(string id, int? originalQuantity, int? quantity)
     {
-        if (!ModelState.IsValid || !isSoldOut.HasValue)
-            return BadRequest();
+        if (!ModelState.IsValid || quantity is null or < 0)
+        {
+            TempData["StockMessage"] = "Vui lòng nhập số lượng nguyên từ 0 trở lên.";
+        }
+        else
+        {
+            var updated = database.MenuItems
+                .Where(item => item.Id == id && item.StockQuantity == originalQuantity)
+                .ExecuteUpdate(update => update
+                    .SetProperty(item => item.StockQuantity, quantity)
+                    .SetProperty(item => item.IsSoldOut, quantity == 0));
+            if (updated == 1)
+                TempData["StockMessage"] = "Đã lưu số lượng tồn kho.";
+            else
+                TempData["StockMessage"] = "Tồn kho vừa thay đổi hoặc món đã bị xóa. Vui lòng kiểm tra lại.";
+        }
 
-        var updated = database.MenuItems.Where(item => item.Id == id)
-            .ExecuteUpdate(update => update.SetProperty(item => item.IsSoldOut, isSoldOut.Value));
-        if (updated == 0)
-            return NotFound();
-
-        TempData["Success"] = isSoldOut.Value ? "Đã đánh dấu hết hàng." : "Đã đánh dấu còn hàng.";
-        return RedirectToAction(nameof(Index));
+        return RedirectToAction(nameof(Index), controllerName: null, routeValues: null, fragment: "stock-dialog");
     }
 
     [HttpPost]

@@ -151,6 +151,9 @@ namespace do_an_1.Migrations
                     b.Property<int>("Price")
                         .HasColumnType("int");
 
+                    b.Property<int?>("StockQuantity")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
                     b.ToTable("MenuItems");

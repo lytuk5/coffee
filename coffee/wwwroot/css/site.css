@@ -860,7 +860,7 @@ a.btn-block {
 .coffee-menu .btn-icon-action { width: 34px; height: 34px; border-radius: 8px; font-size: 18px; }
 .coffee-menu [data-mode="cart"] { background: #bf432d; color: white; }
 
-.coffee-admin-toolbar, .coffee-admin-filters, .coffee-admin-pagination {
+.coffee-admin-toolbar, .coffee-admin-filters {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -888,9 +888,17 @@ a.btn-block {
 .coffee-admin :is(.btn-primary, .btn-secondary) { font-size: 15px; padding: 8px 13px; white-space: nowrap; }
 .coffee-stock-in { color: #28563a; }
 .coffee-stock-out { color: #a52c36; }
-.coffee-admin-pagination { margin-top: 16px; font-size: 15px; }
-.coffee-admin-pagination nav { display: flex; flex-wrap: wrap; gap: 4px; }
-.coffee-admin-pagination a { padding: 5px 11px; border-radius: 4px; }
+.coffee-admin-pagination {
+    display: grid;
+    justify-items: center;
+    gap: 8px;
+    margin-top: 16px;
+    padding-bottom: 72px;
+    font-size: 15px;
+}
+.coffee-admin-pagination nav { display: flex; justify-content: center; flex-wrap: wrap; gap: 4px; }
+.coffee-admin-pagination nav :is(a, span) { padding: 5px 11px; border-radius: 4px; }
+.coffee-admin-pagination nav [aria-disabled="true"] { opacity: .55; }
 .coffee-admin-pagination a[aria-current="page"] { color: white; background: #28563a; }
 
 @media (max-width: 1050px) {
@@ -948,3 +956,22 @@ body:has(.menu-edit-dialog[open]) { overflow: hidden; }
 .menu-size-prices p { font-size: .85rem; margin-block: .5rem; }
 .menu-size-price { margin-top: .65rem; }
 .menu-size-price [data-size-price-field]:not([hidden]) { display: grid; gap: .35rem; margin-top: .35rem; }
+
+#stock-dialog {
+    max-height: 85vh;
+    overflow: auto;
+}
+.stock-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(6rem, 8rem) auto;
+    align-items: center;
+    gap: 8px;
+    margin-block: 10px;
+}
+.stock-row input {
+    width: 100%;
+    min-width: 0;
+    padding: 8px;
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+}
