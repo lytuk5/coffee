@@ -26,16 +26,18 @@ public class MenuController(CafeDbContext database) : Controller
 
         var visibleItems = items.ToList();
         var ids = visibleItems.Select(item => item.Id).ToList();
-        var ratings = database.MenuReviews.Where(review => ids.Contains(review.MenuItemId))
-            .GroupBy(review => review.MenuItemId)
-            .Select(group => new { Id = group.Key, Average = group.Average(review => (double)review.Rating), Count = group.Count() })
-            .ToDictionary(group => group.Id, group => (group.Average, group.Count));
+        var soldQuantities = database.Orders.Where(order => order.Status == OrderStatus.Delivered)
+            .SelectMany(order => order.Items)
+            .Where(line => ids.Contains(line.ItemId))
+            .GroupBy(line => line.ItemId)
+            .Select(group => new { Id = group.Key, Quantity = group.Sum(line => (long)line.Quantity) })
+            .ToDictionary(group => group.Id, group => group.Quantity);
 
         var model = new MenuIndexViewModel
         {
             Categories = database.Categories.AsNoTracking().OrderBy(category => category.Name).ToList(),
             Items = visibleItems,
-            Ratings = ratings,
+            SoldQuantities = soldQuantities,
             ActiveCategory = active,
             Keyword = keyword
         };
@@ -44,7 +46,7 @@ public class MenuController(CafeDbContext database) : Controller
     }
 
     [AllowAnonymous]
-    public IActionResult Details(string id)
+    public IActionResult Details(string id, int? rating = null)
     {
         var item = database.MenuItems.AsNoTracking().SingleOrDefault(item => item.Id == id);
         if (item is null)
@@ -71,7 +73,7 @@ public class MenuController(CafeDbContext database) : Controller
         Guid? customerId = User.IsInRole("Customer") ? CustomerIdentity.GetId(User) : null;
         ViewData["ReviewCustomerId"] = customerId;
         var canReview = customerId.HasValue && CanReview(id, customerId.Value);
-        return View(new MenuDetailsViewModel(item, photos, reviews, canReview));
+        return View(new MenuDetailsViewModel(item, photos, reviews, canReview, rating is >= 1 and <= 5 ? rating : null));
     }
 
     [HttpGet]

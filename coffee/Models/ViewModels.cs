@@ -7,7 +7,7 @@ public class MenuIndexViewModel
 {
     public List<Category> Categories { get; set; } = new();
     public List<MenuItem> Items { get; set; } = new();
-    public Dictionary<string, (double Average, int Count)> Ratings { get; set; } = new();
+    public Dictionary<string, long> SoldQuantities { get; set; } = new();
     public string ActiveCategory { get; set; } = "all";
     public string Keyword { get; set; } = "";
 }

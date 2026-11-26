@@ -24,4 +24,4 @@ public class MenuReviewForm
 public record MenuReviewEntry(Guid CustomerAccountId, string UserName, int Rating, string Comment, DateTime CreatedAt);
 
 public record MenuDetailsViewModel(
-    MenuItem Item, List<string> Photos, List<MenuReviewEntry> Reviews, bool CanReview);
+    MenuItem Item, List<string> Photos, List<MenuReviewEntry> Reviews, bool CanReview, int? SelectedRating);

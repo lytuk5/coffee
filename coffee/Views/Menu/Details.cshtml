@@ -3,6 +3,11 @@
     var item = Model.Item;
     ViewData["Title"] = item.Name;
     var categoryName = ViewData["CategoryName"] as string;
+    var ratingCounts = Model.Reviews.GroupBy(review => review.Rating)
+        .ToDictionary(group => group.Key, group => group.Count());
+    var maxRatingCount = Math.Max(1, ratingCounts.Values.DefaultIfEmpty().Max());
+    var visibleReviews = Model.Reviews.Where(review => !Model.SelectedRating.HasValue ||
+        review.Rating == Model.SelectedRating).ToList();
 }
 
 <section class="view">
@@ -93,6 +98,31 @@
     {
         <partial name="_RatingSummary" model="@((Model.Reviews.Average(review => review.Rating), Model.Reviews.Count))" />
     }
+    <div class="review-overview">
+        <div class="review-breakdown" role="group" aria-label="Số lượt theo mức sao">
+            @for (var stars = 5; stars >= 1; stars--)
+            {
+                var count = ratingCounts.GetValueOrDefault(stars);
+                <div class="review-breakdown-row">
+                    <span>@stars sao</span>
+                    <meter min="0" max="@maxRatingCount" value="@count" aria-hidden="true"></meter>
+                    <span class="review-breakdown-count">@count</span>
+                </div>
+            }
+        </div>
+        <details class="review-filter">
+            <summary class="btn-secondary">@(Model.SelectedRating is int rating ? $"Lọc · {rating} sao" : "Lọc")</summary>
+            <nav class="review-filter-options" aria-label="Lọc đánh giá theo số sao">
+                <a asp-action="Details" asp-route-id="@item.Id" asp-fragment="reviews"
+                   aria-current="@(!Model.SelectedRating.HasValue ? "true" : null)">Tất cả đánh giá</a>
+                @for (var stars = 5; stars >= 1; stars--)
+                {
+                    <a asp-action="Details" asp-route-id="@item.Id" asp-route-rating="@stars" asp-fragment="reviews"
+                       aria-current="@(Model.SelectedRating == stars ? "true" : null)">@stars sao</a>
+                }
+            </nav>
+        </details>
+    </div>
     @if (Model.CanReview)
     {
         <form method="post" asp-action="Review" asp-route-id="@item.Id" class="admin-form menu-detail-form">
@@ -102,11 +132,11 @@
             <button class="btn-primary">Gửi đánh giá</button>
         </form>
     }
-    @if (Model.Reviews.Count == 0)
+    @if (visibleReviews.Count == 0)
     {
-        <p>Chưa có đánh giá.</p>
+        <p>@(Model.SelectedRating.HasValue ? $"Chưa có đánh giá {Model.SelectedRating} sao." : "Chưa có đánh giá.")</p>
     }
-    @foreach (var review in Model.Reviews)
+    @foreach (var review in visibleReviews)
     {
         <article class="menu-review">
             <p class="menu-review-meta">
@@ -120,22 +150,27 @@
             @{
                 var isOwner = (Guid?)ViewData["ReviewCustomerId"] == review.CustomerAccountId;
             }
-            @if (isOwner)
-            {
-                <details>
-                    <summary class="btn-secondary">Sửa đánh giá</summary>
-                    <form method="post" asp-action="EditReview" asp-route-id="@item.Id" class="admin-form menu-detail-form">
-                        <partial name="_StarRating" model="review.Rating" />
-                        <label for="edit-review-comment">Nhận xét</label>
-                        <textarea id="edit-review-comment" name="Comment" maxlength="1000" required>@review.Comment</textarea>
-                        <button class="btn-primary">Lưu đánh giá</button>
-                    </form>
-                </details>
-            }
             @if (isOwner || User.IsInRole("Admin"))
             {
-                <form method="post" asp-action="DeleteReview" asp-route-id="@item.Id" asp-route-authorId="@review.CustomerAccountId">
-                    <button type="submit" class="btn-secondary" data-confirm="Bạn có chắc muốn xóa đánh giá này?">Xóa đánh giá</button>
+                <div class="menu-review-actions">
+                    @if (isOwner)
+                    {
+                        <details class="menu-review-edit-toggle">
+                            <summary class="btn-secondary" aria-controls="edit-review-form">Sửa đánh giá</summary>
+                        </details>
+                    }
+                    <form method="post" asp-action="DeleteReview" asp-route-id="@item.Id" asp-route-authorId="@review.CustomerAccountId">
+                        <button type="submit" class="btn-secondary" data-confirm="Bạn có chắc muốn xóa đánh giá này?">Xóa đánh giá</button>
+                    </form>
+                </div>
+            }
+            @if (isOwner)
+            {
+                <form id="edit-review-form" method="post" asp-action="EditReview" asp-route-id="@item.Id" class="admin-form menu-detail-form">
+                    <partial name="_StarRating" model="review.Rating" />
+                    <label for="edit-review-comment">Nhận xét</label>
+                    <textarea id="edit-review-comment" name="Comment" maxlength="1000" required>@review.Comment</textarea>
+                    <button class="btn-primary">Lưu đánh giá</button>
                 </form>
             }
         </article>
